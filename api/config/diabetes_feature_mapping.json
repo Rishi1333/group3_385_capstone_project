@@ -1,0 +1,69 @@
+{
+  "feature_aliases": {
+    "Pregnancies": ["pregnancies", "pregnant", "pregnancy count", "number of pregnancies", "times pregnant"],
+    "Glucose": ["glucose", "blood glucose", "blood sugar", "sugar level", "fasting glucose", "plasma glucose"],
+    "BloodPressure": ["blood pressure", "bp", "diastolic pressure", "resting blood pressure"],
+    "SkinThickness": ["skin thickness", "triceps skin fold", "skin fold thickness"],
+    "Insulin": ["insulin", "serum insulin", "2-hour serum insulin", "insulin level"],
+    "BMI": ["bmi", "body mass index", "body mass", "weight height ratio"],
+    "DiabetesPedigreeFunction": ["diabetes pedigree", "dpf", "family history diabetes", "diabetes heredity", "pedigree function"],
+    "Age": ["age", "years old", "how old"]
+  },
+  "feature_descriptions": {
+    "Pregnancies": "Number of times pregnant",
+    "Glucose": "Plasma glucose concentration (2 hours in an oral glucose tolerance test) - mg/dL",
+    "BloodPressure": "Diastolic blood pressure - mm Hg",
+    "SkinThickness": "Triceps skin fold thickness - mm",
+    "Insulin": "2-Hour serum insulin - mu U/ml",
+    "BMI": "Body mass index (weight in kg/(height in m)^2)",
+    "DiabetesPedigreeFunction": "Diabetes pedigree function (family history score)",
+    "Age": "Age in years"
+  },
+  "normal_ranges": {
+    "Glucose": {
+      "normal": "70-100 mg/dL (fasting)",
+      "prediabetes": "100-125 mg/dL (fasting)",
+      "diabetes": "126+ mg/dL (fasting)"
+    },
+    "BloodPressure": {
+      "normal": "60-80 mm Hg (diastolic)",
+      "elevated": "80-89 mm Hg",
+      "high": "90+ mm Hg"
+    },
+    "BMI": {
+      "underweight": "<18.5",
+      "normal": "18.5-24.9",
+      "overweight": "25-29.9",
+      "obese": "30+"
+    },
+    "Insulin": {
+      "normal": "16-166 mu U/ml",
+      "note": "Values vary significantly based on timing and individual factors"
+    }
+  },
+  "target_info": {
+    "Outcome": {
+      "description": "Diabetes diagnosis",
+      "values": {
+        "0": "No diabetes",
+        "1": "Diabetes"
+      }
+    }
+  },
+  "risk_factors": {
+    "high_risk_glucose": "Glucose > 140 mg/dL",
+    "high_risk_bmi": "BMI > 30",
+    "high_risk_age": "Age > 45",
+    "high_risk_bp": "Blood Pressure > 90 mm Hg"
+  },
+  "questions": {
+    "Pregnancies": "How many times have you been pregnant?",
+    "Glucose": "What is your fasting blood glucose level (mg/dL)?",
+    "BloodPressure": "What is your diastolic blood pressure (the lower number, in mm Hg)?",
+    "SkinThickness": "Do you know your triceps skin fold thickness (mm)? (Enter 0 if unknown)",
+    "Insulin": "Do you know your 2-hour serum insulin level (mu U/ml)? (Enter 0 if unknown)",
+    "BMI": "What is your Body Mass Index (BMI)?",
+    "DiabetesPedigreeFunction": "This is calculated from family history. Enter 0.5 if unknown.",
+    "Age": "What is your age?"
+  }
+}

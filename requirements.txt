@@ -1,0 +1,15 @@
+# Note: Heart model was trained with scikit-learn 1.7.2
+# If you get version mismatch warnings, you can either:
+# 1. Update scikit-learn: pip install scikit-learn==1.7.2
+# 2. Or retrain the heart model with current version
+scikit-learn==1.4.2
+numpy==2.4.2
+pandas==3.0.0
+joblib==1.5.3
+flask==3.1.2
+requests
+ollama
+flask-cors
+spacy
+# Optional (install if you plan to run plotting during training)
+# matplotlib
