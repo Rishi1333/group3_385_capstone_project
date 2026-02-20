@@ -2,6 +2,10 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 
+from flask_jwt_extended import JWTManager
+from db import db
+from routes.auth import auth_bp
+
 from services.artifact_loader import ArtifactLoader
 from services.feature_extractor import FeatureExtractorFactory, SymptomFeatureExtractor, HeartFeatureExtractor
 from services.symptom_predictor import SymptomPredictor
