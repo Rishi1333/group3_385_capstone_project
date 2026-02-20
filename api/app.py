@@ -1,13 +1,13 @@
 import os
 from flask import Flask, jsonify
 from flask_cors import CORS
-
 from flask_jwt_extended import JWTManager
+
 from db import db
 from routes.auth import auth_bp
 
 from services.artifact_loader import ArtifactLoader
-from services.feature_extractor import FeatureExtractorFactory, SymptomFeatureExtractor, HeartFeatureExtractor
+from services.feature_extractor import FeatureExtractorFactory
 from services.symptom_predictor import SymptomPredictor
 from services.heart_predictor import HeartPredictor
 from services.diabetes_predictor import DiabetesPredictor
@@ -16,41 +16,40 @@ from services.symptom_disease_extended_predictor import SymptomDiseaseExtendedPr
 from services.llm_conversation import LLMConversation
 from services.session_store import SessionStore
 from services.model_router import ModelRouter
-from routes.symptoms import create_prediction_blueprint, symptom_blueprint
+from routes.symptoms import create_prediction_blueprint
+
 
 def create_app():
-    """
-    Application factory for the AI Virtual Clinic API.
-    Loads models, initializes services, and registers routes.
-    
-    Supported models:
-    - symptom: General symptom-based disease prediction
-    - heart: Heart disease prediction
-    - diabetes: Diabetes prediction
-    - mental_health: Mental health screening
-    - symptom_disease_extended: NLP-based disease prediction
-    """
     app = Flask(__name__)
     CORS(app)
+
     
-    # Configuration paths - use environment variables or defaults
-    ARTIFACT_PATH = os.environ.get(
-        "ARTIFACT_PATH",
-        r"your_path_to_artifacts"
-    )
-    SYMPTOM_KEYWORDS_FILE = os.environ.get(
-        "SYMPTOM_KEYWORDS_FILE",
-        r"your_path_to_config/symptom_mapping.json"
-    )
-    HEART_KEYWORDS_FILE = os.environ.get(
-        "HEART_KEYWORDS_FILE",
-        r"your_path_to_config/heart_feature_mapping.json"
-    )
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///clinic.db")
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+
+    jwt_secret = os.environ.get("JWT_SECRET_KEY")
+    if not jwt_secret:
+        raise RuntimeError("JWT_SECRET_KEY is not set. Set it as an environment variable.")
+
+    app.config["JWT_SECRET_KEY"] = jwt_secret
+
+    # Init extensions
+    db.init_app(app)
+    JWTManager(app)
+
+    # Create tables (first run)
+    with app.app_context():
+        db.create_all()
+
+    
+    ARTIFACT_PATH = os.environ.get("ARTIFACT_PATH", r"your_path_to_artifacts")
+    SYMPTOM_KEYWORDS_FILE = os.environ.get("SYMPTOM_KEYWORDS_FILE", r"your_path_to_config/symptom_mapping.json")
+    HEART_KEYWORDS_FILE = os.environ.get("HEART_KEYWORDS_FILE", r"your_path_to_config/heart_feature_mapping.json")
 
     # Load model artifacts
     loader = ArtifactLoader(ARTIFACT_PATH)
-    
-    # Track model availability
+
     models_available = {
         "symptom": False,
         "heart": False,
@@ -58,8 +57,10 @@ def create_app():
         "mental_health": False,
         "symptom_disease_extended": False
     }
-    
-    # Load symptom model (required)
+
+    # ----------------------------
+    # REQUIRED: Symptom model
+    # ----------------------------
     try:
         symptom_bundle = loader.load_symptom_bundle()
         symptom_model = symptom_bundle["model"]
@@ -70,8 +71,10 @@ def create_app():
     except FileNotFoundError as e:
         print(f"Error: Symptom model not found: {e}")
         raise RuntimeError("Symptom model is required but not found")
-    
-    # Load heart model (optional)
+
+    # ----------------------------
+    # Heart model
+    # ----------------------------
     try:
         heart_bundle = loader.load_heart_bundle()
         heart_model = heart_bundle["model"]
@@ -86,7 +89,9 @@ def create_app():
         heart_config = None
         heart_features = []
 
-    # Load diabetes model (optional)
+    # ----------------------------
+    # Diabetes model
+    # ----------------------------
     try:
         diabetes_bundle = loader.load_diabetes_bundle()
         diabetes_model = diabetes_bundle["model"]
@@ -99,7 +104,9 @@ def create_app():
         diabetes_predictor = None
         diabetes_config = None
 
-    # Load mental health model (optional)
+    # ----------------------------
+    # Mental health model
+    # ----------------------------
     try:
         mental_health_bundle = loader.load_mental_health_bundle()
         mental_health_model = mental_health_bundle["model"]
@@ -112,13 +119,15 @@ def create_app():
         mental_health_predictor = None
         mental_health_config = None
 
-    # Load symptom-disease extended model (optional, NLP-based)
+    # ----------------------------
+    # Symptom-disease extended (NLP)
+    # ----------------------------
     try:
-        symptom_disease_extended_bundle = loader.load_symptom_disease_extended_bundle()
+        sde_bundle = loader.load_symptom_disease_extended_bundle()
         symptom_disease_extended_predictor = SymptomDiseaseExtendedPredictor(
-            model=symptom_disease_extended_bundle["model"],
-            config=symptom_disease_extended_bundle["config"],
-            label_encoder=symptom_disease_extended_bundle.get("label_encoder")
+            model=sde_bundle["model"],
+            config=sde_bundle["config"],
+            label_encoder=sde_bundle.get("label_encoder")
         )
         models_available["symptom_disease_extended"] = True
         print("Symptom-disease extended (NLP) model loaded successfully")
@@ -126,35 +135,25 @@ def create_app():
         print("Warning: Symptom-disease extended model not found. NLP predictions will be unavailable.")
         symptom_disease_extended_predictor = None
 
-    # Initialize feature extractors
-    symptom_extractor = FeatureExtractorFactory.create(
-        "symptom",
-        SYMPTOM_KEYWORDS_FILE,
-        symptom_config
+    # Feature extractors
+    symptom_extractor = FeatureExtractorFactory.create("symptom", SYMPTOM_KEYWORDS_FILE, symptom_config)
+    heart_extractor = (
+        FeatureExtractorFactory.create("heart", HEART_KEYWORDS_FILE, heart_config)
+        if models_available["heart"]
+        else None
     )
-    
-    if models_available["heart"]:
-        heart_extractor = FeatureExtractorFactory.create(
-            "heart",
-            HEART_KEYWORDS_FILE,
-            heart_config
-        )
-    else:
-        heart_extractor = None
 
-    # Initialize LLM and session store
+    # LLM + sessions + router
     llm = LLMConversation()
     store = SessionStore(ttl_seconds=900)
-
-    # Initialize model router
     model_router = ModelRouter(threshold=0.65)
 
-    # Create dummy predictors for unavailable models
+    # Dummy predictor for missing models
     class DummyPredictor:
         def predict(self, *args, **kwargs):
             raise NotImplementedError("Model not configured")
-    
-    # Register prediction blueprint with all models
+
+    # Prediction blueprint
     bp = create_prediction_blueprint(
         symptom_predictor=symptom_predictor,
         heart_predictor=heart_predictor or DummyPredictor(),
@@ -169,31 +168,21 @@ def create_app():
         heart_features=heart_features,
         model_router=model_router
     )
-    
     app.register_blueprint(bp)
+
+    # Auth routes
+    app.register_blueprint(auth_bp, url_prefix="/auth")
 
     @app.route("/health")
     def health():
-        return jsonify({
-            "status": "ok",
-            "models": models_available
-        })
+        return jsonify({"status": "ok", "models": models_available})
 
     @app.route("/")
     def index():
         return jsonify({
-            "name": "AI Virtual Clinic API",
+            "name": "Virtual Clinic API",
             "version": "2.0.0",
-            "description": "Multi-model healthcare prediction API",
-            "models_available": models_available,
-            "endpoints": [
-                "/health",
-                "/models",
-                "/predict/symptoms/start",
-                "/predict/symptoms/submit",
-                "/predict/routing",
-                "/predict/direct"
-            ]
+            "models_available": models_available
         })
 
     return app
