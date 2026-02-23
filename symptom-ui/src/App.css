@@ -1,0 +1,23 @@
+:root {
+  font-family: Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top right, #1a2235 0%, #0c0f16 45%, #090b10 100%);
+  color: #f5f5f5;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
