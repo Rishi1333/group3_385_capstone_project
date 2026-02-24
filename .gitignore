@@ -1,0 +1,26 @@
+# Virtual environment
+.venv/
+venv/
+
+# Node modules
+node_modules/
+**/node_modules/
+
+# Plans directory
+plans/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+
+
+artifacts/
+*.pkl

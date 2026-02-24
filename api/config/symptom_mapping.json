@@ -1,0 +1,17 @@
+{
+  "fever": ["fever", "high temperature", "hot body"],
+  "cough": ["cough", "coughing"],
+  "headache": ["headache", "head pain"],
+  "nausea": ["nausea", "feeling sick"],
+  "vomiting": ["vomiting", "throwing up"],
+  "fatigue": ["fatigue", "tired", "weakness"],
+  "sore_throat": ["sore throat", "throat pain"],
+  "chills": ["chills", "shivering"],
+  "body_pain": ["body pain", "muscle pain"],
+  "loss_of_appetite": ["loss of appetite", "not eating"],
+  "abdominal_pain": ["abdominal pain", "stomach pain"],
+  "diarrhea": ["diarrhea", "loose motion"],
+  "sweating": ["sweating", "excess sweat"],
+  "rapid_breathing": ["rapid breathing", "shortness of breath"],
+  "dizziness": ["dizziness", "feeling dizzy"]
+}

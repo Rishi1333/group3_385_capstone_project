@@ -1,0 +1,29 @@
+﻿{
+  "feature_aliases": {
+    "age": ["age", "years old", "how old"],
+    "sex": ["sex", "gender", "male", "female"],
+    "cp": ["chest pain", "chest pain type", "angina", "chest discomfort"],
+    "trestbps": ["resting blood pressure", "blood pressure", "trestbps", "bp"],
+    "chol": ["cholesterol", "chol", "serum cholesterol"],
+    "fbs": ["fasting blood sugar", "fbs", "blood sugar", "glucose"],
+    "restecg": ["resting ecg", "restecg", "electrocardiographic results", "ecg"],
+    "thalch": ["maximum heart rate", "heart rate", "thalch", "max heart rate achieved"],
+    "exang": ["exercise induced angina", "exang", "exercise angina", "angina during exercise"],
+    "oldpeak": ["st depression", "oldpeak", "depression induced by exercise"],
+    "slope": ["slope of peak exercise st segment", "slope", "st segment slope"],
+    "ca": ["number of major vessels", "ca", "major vessels colored by fluoroscopy", "vessels"],
+    "thal": ["thalassemia", "thal", "thal test result", "blood disorder"]
+  },
+  "categorical_values": {
+    "sex": {
+      "Male": ["male", "man", "m", "boy"],      "Female": ["female", "woman", "f", "girl"]    },
+    "cp": {      "typical angina": ["typical angina", "classic angina", "chest pain with exertion"],      "atypical angina": ["atypical angina", "non-classic chest pain"],      "non-anginal": ["non-anginal", "non-cardiac chest pain", "chest pain not from heart"],      "asymptomatic": ["asymptomatic", "no chest pain", "no symptoms"]    },
+    "fbs": {      "True": ["true", "yes", "high", "elevated", "above 120", ">120"],      "False": ["false", "no", "normal", "below 120", "<120"]    },
+    "restecg": {      "normal": ["normal", "no abnormality"],      "lv hypertrophy": ["lv hypertrophy", "left ventricular hypertrophy", "ventricular hypertrophy", "enlarged heart"],      "st-t abnormality": ["st-t abnormality", "st abnormality", "t wave abnormality", "ischemia"]    },
+    "exang": {      "True": ["true", "yes", "have exercise angina", "experience chest pain during exercise"],      "False": ["false", "no", "no exercise angina", "no chest pain during exercise"]    },
+    "slope": {      "upsloping": ["upsloping", "up", "positive slope"],      "flat": ["flat", "horizontal", "level"],      "downsloping": ["downsloping", "down", "negative slope"]    },
+    "thal": {      "normal": ["normal", "no defect", "healthy"],      "fixed defect": ["fixed defect", "old defect", "prior defect", "scar tissue"],      "reversable defect": ["reversable defect", "reversible defect", "temporary defect", "ischemic defect"]    },
+    "dataset": {      "Cleveland": ["cleveland", "cleaveland clinic"],      "Hungary": ["hungary", "hungarian"],      "Switzerland": ["switzerland", "swiss"],      "VA Long Beach": ["va long beach", "long beach va", "veterans affairs long beach"]    }  },
+  "target_info": {    "num": {      "description": "Diagnosis of heart disease",      "values": {        "0": "No heart disease",        "1": "Mild heart disease",        "2": "Moderate heart disease",        "3": "Severe heart disease",        "4": "Very severe heart disease"      },
+      "binary_mapping": {        "0": "no disease",        "1": "disease"      }    }  }
+}
