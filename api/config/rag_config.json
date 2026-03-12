@@ -1,0 +1,36 @@
+{
+    "enabled": true,
+    "backend": "chromadb",
+    "embedding": {
+        "model": "sentence-transformers/all-MiniLM-L6-v2",
+        "device": "cpu",
+        "dimension": 384
+    },
+    "retrieval": {
+        "top_k": 5,
+        "min_score": 0.3,
+        "rerank": false
+    },
+    "generation": {
+        "max_tokens": 500,
+        "temperature": 0.7
+    },
+    "indexing": {
+        "batch_size": 100,
+        "chunk_size": 500,
+        "chunk_overlap": 50,
+        "max_dataset_rows": 5000
+    },
+    "fallback_behavior": {
+        "log_errors": true,
+        "notify_user": true,
+        "cache_results": true,
+        "cache_size": 10000
+    },
+    "model_categories": {
+        "symptom": ["disease", "symptom", "general"],
+        "heart": ["cardiac", "heart", "cardiovascular"],
+        "diabetes": ["diabetes", "endocrine", "metabolic"],
+        "mental_health": ["mental_health", "psychiatric", "psychological"]
+    }
+}
