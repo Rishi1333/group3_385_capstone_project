@@ -1,0 +1,315 @@
+{
+  "clinics": [
+    {
+      "id": "clinic-001",
+      "name": "Downtown Medical Center",
+      "address": "123 Main Street, Toronto, ON M5V 1A1",
+      "location": {
+        "type": "Point",
+        "coordinates": [-79.3832, 43.6532]
+      },
+      "phone": "416-555-0101",
+      "email": "info@downtownmedical.ca",
+      "specialties": ["general", "cardiology", "dermatology", "neurology"],
+      "doctors": [
+        {
+          "id": "doc-001",
+          "name": "Dr. Sarah Johnson",
+          "specialty": "General Practice",
+          "specialty_codes": ["general"],
+          "available_days": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday"
+          ],
+          "consultation_duration_minutes": 30
+        },
+        {
+          "id": "doc-002",
+          "name": "Dr. Michael Chen",
+          "specialty": "Cardiology",
+          "specialty_codes": ["cardiology"],
+          "available_days": ["monday", "wednesday", "friday"],
+          "consultation_duration_minutes": 45
+        },
+        {
+          "id": "doc-003",
+          "name": "Dr. Emily Rodriguez",
+          "specialty": "Dermatology",
+          "specialty_codes": ["dermatology"],
+          "available_days": ["tuesday", "thursday"],
+          "consultation_duration_minutes": 30
+        },
+        {
+          "id": "doc-004",
+          "name": "Dr. David Kim",
+          "specialty": "Neurology",
+          "specialty_codes": ["neurology"],
+          "available_days": ["monday", "tuesday", "wednesday"],
+          "consultation_duration_minutes": 45
+        }
+      ],
+      "operating_hours": {
+        "weekday": { "open": "08:00", "close": "18:00" },
+        "weekend": { "open": "09:00", "close": "14:00" }
+      },
+      "rating": 4.8,
+      "accepts_walk_ins": true
+    },
+    {
+      "id": "clinic-002",
+      "name": "North York Health Clinic",
+      "address": "456 Sheppard Avenue, North York, ON M2N 1N2",
+      "location": {
+        "type": "Point",
+        "coordinates": [-79.4163, 43.7543]
+      },
+      "phone": "416-555-0202",
+      "email": "appointments@northyorkhealth.ca",
+      "specialties": [
+        "general",
+        "internal_medicine",
+        "endocrinology",
+        "pulmonology"
+      ],
+      "doctors": [
+        {
+          "id": "doc-005",
+          "name": "Dr. James Wilson",
+          "specialty": "Internal Medicine",
+          "specialty_codes": ["internal_medicine", "general"],
+          "available_days": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday"
+          ],
+          "consultation_duration_minutes": 30
+        },
+        {
+          "id": "doc-006",
+          "name": "Dr. Lisa Patel",
+          "specialty": "Endocrinology",
+          "specialty_codes": ["endocrinology"],
+          "available_days": ["wednesday", "thursday", "friday"],
+          "consultation_duration_minutes": 45
+        },
+        {
+          "id": "doc-007",
+          "name": "Dr. Robert Martinez",
+          "specialty": "Pulmonology",
+          "specialty_codes": ["pulmonology"],
+          "available_days": ["monday", "tuesday", "wednesday"],
+          "consultation_duration_minutes": 45
+        }
+      ],
+      "operating_hours": {
+        "weekday": { "open": "09:00", "close": "17:00" },
+        "weekend": { "open": null, "close": null }
+      },
+      "rating": 4.5,
+      "accepts_walk_ins": false
+    },
+    {
+      "id": "clinic-003",
+      "name": "Scarborough Medical Associates",
+      "address": "789 Kingston Road, Scarborough, ON M1E 1B3",
+      "location": {
+        "type": "Point",
+        "coordinates": [-79.2405, 43.7717]
+      },
+      "phone": "416-555-0303",
+      "email": "bookings@scarboroughmedical.ca",
+      "specialties": ["general", "psychiatry", "psychology"],
+      "doctors": [
+        {
+          "id": "doc-008",
+          "name": "Dr. Amanda Foster",
+          "specialty": "General Practice",
+          "specialty_codes": ["general"],
+          "available_days": ["monday", "tuesday", "wednesday", "thursday"],
+          "consultation_duration_minutes": 30
+        },
+        {
+          "id": "doc-009",
+          "name": "Dr. Thomas Wright",
+          "specialty": "Psychiatry",
+          "specialty_codes": ["psychiatry"],
+          "available_days": ["tuesday", "wednesday", "thursday", "friday"],
+          "consultation_duration_minutes": 60
+        },
+        {
+          "id": "doc-010",
+          "name": "Dr. Jennifer Lee",
+          "specialty": "Psychology",
+          "specialty_codes": ["psychology"],
+          "available_days": ["monday", "wednesday", "friday"],
+          "consultation_duration_minutes": 60
+        }
+      ],
+      "operating_hours": {
+        "weekday": { "open": "08:30", "close": "16:30" },
+        "weekend": { "open": null, "close": null }
+      },
+      "rating": 4.6,
+      "accepts_walk_ins": false
+    },
+    {
+      "id": "clinic-004",
+      "name": "Etobicoke General Hospital Outpatient",
+      "address": "321 The Queensway, Etobicoke, ON M8Z 1T6",
+      "location": {
+        "type": "Point",
+        "coordinates": [-79.5232, 43.6205]
+      },
+      "phone": "416-555-0404",
+      "email": "outpatient@etobicokgeneral.ca",
+      "specialties": ["general", "cardiology", "emergency", "orthopedics"],
+      "doctors": [
+        {
+          "id": "doc-011",
+          "name": "Dr. Christopher Brown",
+          "specialty": "General Practice",
+          "specialty_codes": ["general"],
+          "available_days": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday"
+          ],
+          "consultation_duration_minutes": 30
+        },
+        {
+          "id": "doc-012",
+          "name": "Dr. Rachel Green",
+          "specialty": "Cardiology",
+          "specialty_codes": ["cardiology"],
+          "available_days": ["monday", "tuesday", "thursday", "friday"],
+          "consultation_duration_minutes": 45
+        },
+        {
+          "id": "doc-013",
+          "name": "Dr. Andrew Taylor",
+          "specialty": "Orthopedics",
+          "specialty_codes": ["orthopedics"],
+          "available_days": ["wednesday", "thursday", "friday"],
+          "consultation_duration_minutes": 45
+        }
+      ],
+      "operating_hours": {
+        "weekday": { "open": "07:00", "close": "19:00" },
+        "weekend": { "open": "08:00", "close": "16:00" }
+      },
+      "rating": 4.3,
+      "accepts_walk_ins": true
+    },
+    {
+      "id": "clinic-005",
+      "name": "Mississauga Wellness Centre",
+      "address": "555 Hurontario Street, Mississauga, ON L5B 1N9",
+      "location": {
+        "type": "Point",
+        "coordinates": [-79.6441, 43.589]
+      },
+      "phone": "905-555-0505",
+      "email": "info@mississaugawellness.ca",
+      "specialties": ["general", "dermatology", "gastroenterology"],
+      "doctors": [
+        {
+          "id": "doc-014",
+          "name": "Dr. Priya Sharma",
+          "specialty": "General Practice",
+          "specialty_codes": ["general"],
+          "available_days": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday"
+          ],
+          "consultation_duration_minutes": 30
+        },
+        {
+          "id": "doc-015",
+          "name": "Dr. Daniel O'Connor",
+          "specialty": "Dermatology",
+          "specialty_codes": ["dermatology"],
+          "available_days": ["monday", "wednesday", "friday"],
+          "consultation_duration_minutes": 30
+        },
+        {
+          "id": "doc-016",
+          "name": "Dr. Michelle Wong",
+          "specialty": "Gastroenterology",
+          "specialty_codes": ["gastroenterology"],
+          "available_days": ["tuesday", "thursday"],
+          "consultation_duration_minutes": 45
+        }
+      ],
+      "operating_hours": {
+        "weekday": { "open": "08:00", "close": "17:00" },
+        "weekend": { "open": null, "close": null }
+      },
+      "rating": 4.7,
+      "accepts_walk_ins": true
+    }
+  ],
+  "specialty_mapping": {
+    "headache": ["general", "neurology"],
+    "migraine": ["neurology", "general"],
+    "chest_pain": ["cardiology", "emergency"],
+    "heart_palpitations": ["cardiology"],
+    "high_blood_pressure": ["cardiology", "general"],
+    "skin_rash": ["dermatology", "general"],
+    "acne": ["dermatology"],
+    "skin_lesion": ["dermatology"],
+    "fever": ["general", "internal_medicine"],
+    "cough": ["general", "pulmonology"],
+    "shortness_of_breath": ["pulmonology", "cardiology"],
+    "diabetes_risk": ["endocrinology", "internal_medicine"],
+    "diabetes": ["endocrinology", "internal_medicine"],
+    "thyroid_issues": ["endocrinology"],
+    "anxiety": ["psychiatry", "psychology", "general"],
+    "depression": ["psychiatry", "psychology"],
+    "mental_health_concerns": ["psychiatry", "psychology"],
+    "joint_pain": ["orthopedics", "general"],
+    "back_pain": ["orthopedics", "general"],
+    "knee_pain": ["orthopedics"],
+    "stomach_pain": ["gastroenterology", "general"],
+    "digestive_issues": ["gastroenterology", "general"],
+    "nausea": ["gastroenterology", "general"],
+    "fatigue": ["general", "internal_medicine"],
+    "dizziness": ["general", "neurology", "cardiology"],
+    "allergies": ["general"],
+    "infection": ["general", "internal_medicine"],
+    "flu": ["general"],
+    "cold": ["general"],
+    "ear_pain": ["general"],
+    "sore_throat": ["general"],
+    "eye_problems": ["general"],
+    "sleep_issues": ["psychiatry", "psychology", "general"],
+    "weight_concerns": ["endocrinology", "general"],
+    "general_checkup": ["general"],
+    "follow_up": ["general"]
+  },
+  "condition_to_symptom_mapping": {
+    "Tension Headache": ["headache"],
+    "Migraine": ["migraine", "headache"],
+    "Cluster Headache": ["headache"],
+    "Hypertension": ["high_blood_pressure"],
+    "Heart Disease Risk": ["cardiology"],
+    "Diabetes Risk": ["diabetes_risk", "diabetes"],
+    "Anxiety": ["anxiety"],
+    "Depression": ["depression"],
+    "Common Cold": ["cold", "cough", "fever"],
+    "Flu": ["flu", "fever", "cough"],
+    "Gastroenteritis": ["stomach_pain", "nausea"],
+    "Dermatitis": ["skin_rash"],
+    "Bronchitis": ["cough", "shortness_of_breath"],
+    "Asthma": ["shortness_of_breath", "cough"]
+  }
+}

@@ -1,0 +1,762 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2026-03-20",
+    "description": "Emergency red flag symptoms for triage classification",
+    "disclaimer": "This is for AI triage assistance only. Always err on the side of caution."
+  },
+  "emergency_contacts": {
+    "us": {
+      "emergency": "911",
+      "poison_control": "1-800-222-1222",
+      "suicide_prevention": "988",
+      "crisis_text": "Text HOME to 741741"
+    },
+    "uk": {
+      "emergency": "999",
+      "non_emergency": "111"
+    },
+    "eu": {
+      "emergency": "112"
+    }
+  },
+  "red_flags": {
+    "cardiovascular": {
+      "critical": [
+        {
+          "id": "cv_001",
+          "symptom": "chest_pain",
+          "display_name": "Chest Pain",
+          "context_indicators": [
+            "radiating to arm, jaw, neck, or back",
+            "associated with sweating",
+            "associated with shortness of breath",
+            "associated with nausea",
+            "crushing or pressure-like quality",
+            "occurs at rest",
+            "worsens with exertion"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "myocardial infarction",
+            "angina",
+            "aortic dissection"
+          ],
+          "questions": [
+            "Is the pain crushing, pressure-like, or squeezing?",
+            "Does the pain radiate to your arm, jaw, neck, or back?",
+            "Are you sweating profusely?",
+            "Do you feel short of breath?",
+            "Do you feel nauseous or lightheaded?",
+            "Does the pain occur at rest or with exertion?",
+            "How long have you had this pain?"
+          ],
+          "immediate_action": "Call emergency services immediately. Do not drive yourself."
+        },
+        {
+          "id": "cv_002",
+          "symptom": "severe_hypertension",
+          "display_name": "Severe High Blood Pressure",
+          "context_indicators": [
+            "blood pressure above 180/120",
+            "with headache",
+            "with vision changes",
+            "with chest pain",
+            "with shortness of breath"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": ["hypertensive crisis", "stroke risk"],
+          "questions": [
+            "What is your current blood pressure reading?",
+            "Do you have a severe headache?",
+            "Are you experiencing vision changes?",
+            "Do you have chest pain?"
+          ],
+          "immediate_action": "Seek immediate medical attention."
+        }
+      ],
+      "high": [
+        {
+          "id": "cv_003",
+          "symptom": "palpitations",
+          "display_name": "Heart Palpitations",
+          "context_indicators": [
+            "associated with dizziness",
+            "associated with chest discomfort",
+            "irregular rhythm",
+            "history of heart disease",
+            "lasting more than a few minutes"
+          ],
+          "urgency": "HIGH",
+          "potential_conditions": ["arrhythmia", "atrial fibrillation"],
+          "questions": [
+            "How long have you been experiencing palpitations?",
+            "Are you also feeling dizzy or lightheaded?",
+            "Do you have any chest discomfort?",
+            "Do you have a history of heart problems?",
+            "Is your heartbeat regular or irregular?"
+          ]
+        }
+      ]
+    },
+    "neurological": {
+      "critical": [
+        {
+          "id": "neuro_001",
+          "symptom": "stroke_signs",
+          "display_name": "Stroke Symptoms (FAST)",
+          "context_indicators": [
+            "facial droop",
+            "arm weakness or drift",
+            "speech difficulty",
+            "sudden onset",
+            "time sensitive - within 3 hours"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "ischemic stroke",
+            "hemorrhagic stroke",
+            "TIA"
+          ],
+          "questions": [
+            "Can you smile? Does one side of your face droop?",
+            "Can you raise both arms? Does one arm drift downward?",
+            "Can you repeat a simple sentence? Is your speech slurred?",
+            "When did these symptoms start?",
+            "Do you have a sudden severe headache?"
+          ],
+          "immediate_action": "Call emergency services immediately. Note the time symptoms started.",
+          "mnemonic": "FAST: Face drooping, Arm weakness, Speech difficulty, Time to call 911"
+        },
+        {
+          "id": "neuro_002",
+          "symptom": "severe_headache",
+          "display_name": "Sudden Severe Headache",
+          "context_indicators": [
+            "worst headache of life",
+            "sudden onset (thunderclap)",
+            "associated with stiff neck",
+            "associated with fever",
+            "associated with confusion",
+            "after head injury"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "subarachnoid hemorrhage",
+            "meningitis",
+            "head trauma"
+          ],
+          "questions": [
+            "Is this the worst headache you've ever had?",
+            "Did it come on suddenly, like a thunderclap?",
+            "Do you have a stiff neck?",
+            "Do you have a fever?",
+            "Have you had any recent head injury?",
+            "Are you confused or having trouble thinking?"
+          ],
+          "immediate_action": "Call emergency services immediately."
+        },
+        {
+          "id": "neuro_003",
+          "symptom": "seizure",
+          "display_name": "Seizure Activity",
+          "context_indicators": [
+            "first-time seizure",
+            "prolonged seizure (>5 minutes)",
+            "multiple seizures without recovery",
+            "associated with head injury",
+            "associated with fever in child"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "epilepsy",
+            "febrile seizure",
+            "head trauma",
+            "infection"
+          ],
+          "questions": [
+            "Is this the first time you've had a seizure?",
+            "How long did the seizure last?",
+            "Did you lose consciousness?",
+            "Did you bite your tongue or lose bladder control?",
+            "Have you had any recent head injury?"
+          ],
+          "immediate_action": "Call emergency services for first-time seizure or if seizure lasts >5 minutes."
+        }
+      ],
+      "high": [
+        {
+          "id": "neuro_004",
+          "symptom": "sudden_vision_loss",
+          "display_name": "Sudden Vision Loss",
+          "context_indicators": [
+            "sudden onset",
+            "one eye affected",
+            "painless",
+            "with flashing lights",
+            "with floaters"
+          ],
+          "urgency": "HIGH",
+          "potential_conditions": [
+            "retinal detachment",
+            "optic neuritis",
+            "stroke"
+          ],
+          "questions": [
+            "Did the vision loss occur suddenly?",
+            "Is one eye or both eyes affected?",
+            "Is there any pain?",
+            "Do you see flashing lights or new floaters?",
+            "Do you have diabetes or high blood pressure?"
+          ]
+        }
+      ]
+    },
+    "respiratory": {
+      "critical": [
+        {
+          "id": "resp_001",
+          "symptom": "severe_breathing_difficulty",
+          "display_name": "Severe Shortness of Breath",
+          "context_indicators": [
+            "unable to speak in full sentences",
+            "blue lips or face",
+            "severe distress",
+            "associated with chest pain",
+            "sudden onset",
+            "history of asthma/COPD not responding to rescue inhaler"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "severe asthma attack",
+            "COPD exacerbation",
+            "pulmonary embolism",
+            "pneumothorax"
+          ],
+          "questions": [
+            "Can you speak in full sentences?",
+            "Are your lips or face turning blue?",
+            "Do you feel like you're suffocating?",
+            "Is there associated chest pain?",
+            "Did this come on suddenly?",
+            "If you have asthma/COPD, did your rescue inhaler help?"
+          ],
+          "immediate_action": "Call emergency services immediately. Sit upright if possible."
+        },
+        {
+          "id": "resp_002",
+          "symptom": "anaphylaxis",
+          "display_name": "Severe Allergic Reaction",
+          "context_indicators": [
+            "swelling of lips, tongue, or throat",
+            "difficulty breathing",
+            "widespread hives",
+            "recent exposure to allergen",
+            "history of severe allergies",
+            "low blood pressure"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": ["anaphylaxis"],
+          "questions": [
+            "Are your lips, tongue, or throat swelling?",
+            "Are you having difficulty breathing or swallowing?",
+            "Do you have widespread hives or rash?",
+            "Were you recently exposed to something you're allergic to?",
+            "Do you have an EpiPen?"
+          ],
+          "immediate_action": "Use EpiPen if available. Call emergency services immediately."
+        },
+        {
+          "id": "resp_003",
+          "symptom": "choking",
+          "display_name": "Choking/Foreign Body Aspiration",
+          "context_indicators": [
+            "sudden inability to talk",
+            "clutching throat",
+            "difficulty breathing",
+            "cyanosis",
+            "occurred while eating"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "foreign body aspiration",
+            "airway obstruction"
+          ],
+          "questions": [
+            "Can you speak or make sounds?",
+            "Are you able to cough?",
+            "Did this happen while eating?"
+          ],
+          "immediate_action": "If cannot breathe/cough/speak: Begin Heimlich maneuver. Call emergency services."
+        }
+      ],
+      "high": [
+        {
+          "id": "resp_004",
+          "symptom": "coughing_blood",
+          "display_name": "Coughing Up Blood",
+          "context_indicators": [
+            "significant amount of blood",
+            "associated with chest pain",
+            "associated with shortness of breath",
+            "history of lung disease",
+            "history of blood clots"
+          ],
+          "urgency": "HIGH",
+          "potential_conditions": [
+            "pulmonary embolism",
+            "lung cancer",
+            "tuberculosis",
+            "bronchiectasis"
+          ],
+          "questions": [
+            "How much blood are you coughing up?",
+            "Is it bright red or dark?",
+            "Do you have chest pain?",
+            "Are you short of breath?",
+            "Do you have a history of lung disease or blood clots?"
+          ]
+        }
+      ]
+    },
+    "psychiatric": {
+      "critical": [
+        {
+          "id": "psych_001",
+          "symptom": "suicidal_ideation",
+          "display_name": "Suicidal Thoughts",
+          "context_indicators": [
+            "active suicidal thoughts",
+            "has a plan",
+            "has means to carry out plan",
+            "giving away possessions",
+            "saying goodbye to loved ones",
+            "previous suicide attempt"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "major depression",
+            "bipolar disorder",
+            "acute crisis"
+          ],
+          "questions": [
+            "Are you having thoughts of hurting yourself?",
+            "Do you have a plan for how you would do it?",
+            "Do you have access to the means to carry out your plan?",
+            "Have you made any preparations (giving away items, writing notes)?",
+            "Have you attempted suicide before?",
+            "Are you currently under the influence of drugs or alcohol?"
+          ],
+          "immediate_action": "Do not leave the person alone. Call emergency services or suicide hotline (988 in US).",
+          "hotlines": {
+            "us": "988 (Suicide & Crisis Lifeline)",
+            "crisis_text": "Text HOME to 741741",
+            "international": "https://findahelpline.com/"
+          }
+        },
+        {
+          "id": "psych_002",
+          "symptom": "self_harm",
+          "display_name": "Active Self-Harm",
+          "context_indicators": [
+            "currently engaging in self-harm",
+            "severe injury",
+            "uncontrolled bleeding",
+            "intent to cause serious harm"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "borderline personality disorder",
+            "depression",
+            "acute crisis"
+          ],
+          "questions": [
+            "Are you currently injured?",
+            "Is there active bleeding?",
+            "Do you need immediate medical attention for your injuries?",
+            "Are you safe right now?"
+          ],
+          "immediate_action": "Seek immediate medical attention for injuries. Contact mental health crisis services."
+        },
+        {
+          "id": "psych_003",
+          "symptom": "psychosis",
+          "display_name": "Acute Psychosis",
+          "context_indicators": [
+            "hallucinations",
+            "delusions",
+            "severe disorientation",
+            "danger to self or others",
+            "command hallucinations"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "schizophrenia",
+            "bipolar mania",
+            "drug-induced psychosis"
+          ],
+          "questions": [
+            "Are you seeing or hearing things others don't?",
+            "Do you feel like someone is trying to harm you?",
+            "Are you having thoughts of hurting yourself or others?",
+            "Are you currently taking any medications or substances?"
+          ],
+          "immediate_action": "Ensure safety. Contact emergency services if danger to self or others."
+        }
+      ],
+      "high": [
+        {
+          "id": "psych_004",
+          "symptom": "severe_anxiety",
+          "display_name": "Severe Anxiety/Panic Attack",
+          "context_indicators": [
+            "feeling of impending doom",
+            "chest pain",
+            "difficulty breathing",
+            "palpitations",
+            "first-time occurrence",
+            "different from usual panic attacks"
+          ],
+          "urgency": "HIGH",
+          "potential_conditions": [
+            "panic disorder",
+            "anxiety disorder",
+            "medical emergency (rule out)"
+          ],
+          "questions": [
+            "Is this the first time you've experienced this?",
+            "Does this feel different from your usual panic attacks?",
+            "Do you have chest pain or pressure?",
+            "Are you sweating profusely?",
+            "Do you have a history of heart problems?"
+          ],
+          "note": "Must rule out cardiac emergency before attributing to anxiety"
+        }
+      ]
+    },
+    "gastrointestinal": {
+      "critical": [
+        {
+          "id": "gi_001",
+          "symptom": "severe_abdominal_pain",
+          "display_name": "Severe Abdominal Pain",
+          "context_indicators": [
+            "sudden onset severe pain",
+            "abdomen rigid to touch",
+            "fever",
+            "vomiting blood",
+            "blood in stool",
+            "pregnancy",
+            "recent abdominal surgery"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "appendicitis",
+            "perforated ulcer",
+            "ectopic pregnancy",
+            "bowel obstruction"
+          ],
+          "questions": [
+            "How severe is the pain on a scale of 1-10?",
+            "Where exactly is the pain located?",
+            "Did it start suddenly or gradually?",
+            "Is your abdomen tender or rigid to touch?",
+            "Are you vomiting blood or passing blood in stool?",
+            "For women: Is there any chance you're pregnant?"
+          ],
+          "immediate_action": "Seek immediate medical attention. Do not eat or drink."
+        },
+        {
+          "id": "gi_002",
+          "symptom": "gi_bleeding",
+          "display_name": "Gastrointestinal Bleeding",
+          "context_indicators": [
+            "vomiting bright red blood",
+            "vomiting coffee-ground material",
+            "black tarry stools",
+            "bright red blood in stool",
+            "dizziness or fainting",
+            "pale appearance"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "upper GI bleed",
+            "lower GI bleed",
+            "varices",
+            "ulcer"
+          ],
+          "questions": [
+            "Are you vomiting blood or material that looks like coffee grounds?",
+            "Are your stools black and tarry?",
+            "Is there bright red blood in your stool?",
+            "Do you feel dizzy or faint?",
+            "Are you taking blood thinners or NSAIDs?",
+            "Do you have liver disease or history of ulcers?"
+          ],
+          "immediate_action": "Call emergency services immediately."
+        }
+      ],
+      "high": [
+        {
+          "id": "gi_003",
+          "symptom": "dehydration_severe",
+          "display_name": "Severe Dehydration",
+          "context_indicators": [
+            "unable to keep fluids down",
+            "no urination for 8+ hours",
+            "confusion",
+            "rapid heartbeat",
+            "sunken eyes",
+            "in infant or elderly"
+          ],
+          "urgency": "HIGH",
+          "potential_conditions": [
+            "severe dehydration",
+            "electrolyte imbalance"
+          ],
+          "questions": [
+            "How long have you been unable to keep fluids down?",
+            "When did you last urinate?",
+            "Are you feeling confused or disoriented?",
+            "Is your heart racing?",
+            "Are you experiencing dizziness when standing?"
+          ]
+        }
+      ]
+    },
+    "trauma": {
+      "critical": [
+        {
+          "id": "trauma_001",
+          "symptom": "head_injury_severe",
+          "display_name": "Severe Head Injury",
+          "context_indicators": [
+            "loss of consciousness",
+            "confusion or disorientation",
+            "vomiting",
+            "clear fluid from ear or nose",
+            "unequal pupils",
+            "severe headache",
+            "amnesia"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "traumatic brain injury",
+            "skull fracture",
+            "intracranial hemorrhage"
+          ],
+          "questions": [
+            "Did you lose consciousness? For how long?",
+            "Are you confused or having trouble remembering what happened?",
+            "Have you vomited?",
+            "Is there clear fluid draining from your ear or nose?",
+            "Do you have a severe headache?",
+            "Are your pupils different sizes?"
+          ],
+          "immediate_action": "Call emergency services. Do not move if spinal injury suspected."
+        },
+        {
+          "id": "trauma_002",
+          "symptom": "severe_bleeding",
+          "display_name": "Severe Bleeding",
+          "context_indicators": [
+            "blood spurting",
+            "bleeding not stopping with pressure",
+            "large wound",
+            "pale appearance",
+            "rapid weak pulse",
+            "confusion"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": ["hemorrhage", "arterial bleeding"],
+          "questions": [
+            "Is the blood spurting or flowing heavily?",
+            "Have you applied direct pressure for 10-15 minutes?",
+            "How much blood have you lost (estimate)?",
+            "Are you feeling dizzy, cold, or confused?"
+          ],
+          "immediate_action": "Apply firm direct pressure. Call emergency services. Use tourniquet if limb and life-threatening."
+        },
+        {
+          "id": "trauma_003",
+          "symptom": "spinal_injury",
+          "display_name": "Potential Spinal Cord Injury",
+          "context_indicators": [
+            "inability to move limbs",
+            "loss of sensation",
+            "neck or back pain after trauma",
+            "fall from height",
+            "diving accident",
+            "motor vehicle accident"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": ["spinal cord injury", "vertebral fracture"],
+          "questions": [
+            "Can you move your arms and legs?",
+            "Do you have feeling in your arms and legs?",
+            "Did this happen after a fall, dive, or car accident?",
+            "Do you have neck or back pain?"
+          ],
+          "immediate_action": "DO NOT MOVE. Call emergency services immediately. Keep still until help arrives."
+        }
+      ]
+    },
+    "pediatric": {
+      "critical": [
+        {
+          "id": "peds_001",
+          "symptom": "fever_infant",
+          "display_name": "Fever in Infant Under 3 Months",
+          "context_indicators": [
+            "age under 3 months",
+            "rectal temperature 100.4°F (38°C) or higher",
+            "lethargic",
+            "not feeding",
+            "irritable"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "serious bacterial infection",
+            "sepsis",
+            "meningitis"
+          ],
+          "questions": [
+            "How old is the baby?",
+            "What is the rectal temperature?",
+            "Is the baby feeding normally?",
+            "Is the baby lethargic or unusually irritable?",
+            "Has the baby had any vaccines recently?"
+          ],
+          "immediate_action": "Seek immediate medical attention. Fever in infants under 3 months is a medical emergency."
+        },
+        {
+          "id": "peds_002",
+          "symptom": "dehydration_infant",
+          "display_name": "Severe Dehydration in Child",
+          "context_indicators": [
+            "no wet diapers for 6+ hours",
+            "sunken fontanelle (soft spot)",
+            "no tears when crying",
+            "sunken eyes",
+            "lethargic",
+            "dry mouth"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "severe dehydration",
+            "viral gastroenteritis",
+            "bacterial infection"
+          ],
+          "questions": [
+            "When was the last wet diaper?",
+            "Does the child have tears when crying?",
+            "Is the soft spot on the head sunken?",
+            "Is the child alert or lethargic?",
+            "Has there been vomiting or diarrhea?"
+          ],
+          "immediate_action": "Seek immediate medical attention."
+        }
+      ]
+    },
+    "endocrine": {
+      "critical": [
+        {
+          "id": "endo_001",
+          "symptom": "diabetic_emergency",
+          "display_name": "Diabetic Emergency",
+          "context_indicators": [
+            "confusion or altered consciousness",
+            "sweating",
+            "shaking",
+            "rapid heartbeat",
+            "known diabetes",
+            "missed meals",
+            "too much insulin"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "hypoglycemia",
+            "diabetic ketoacidosis",
+            "hyperosmolar state"
+          ],
+          "questions": [
+            "Do you have diabetes?",
+            "When did you last eat?",
+            "When did you last take your diabetes medication/insulin?",
+            "Are you feeling confused or disoriented?",
+            "Are you sweating and shaking?",
+            "Can you check your blood sugar?"
+          ],
+          "immediate_action": "If conscious and able to swallow, give sugar. If unconscious, call emergency services. Do not give anything by mouth if unconscious."
+        }
+      ]
+    },
+    "obstetric": {
+      "critical": [
+        {
+          "id": "ob_001",
+          "symptom": "pregnancy_emergency",
+          "display_name": "Pregnancy Emergency",
+          "context_indicators": [
+            "vaginal bleeding",
+            "severe abdominal pain",
+            "decreased fetal movement",
+            "severe headache",
+            "visual changes",
+            "sudden swelling",
+            "leaking fluid"
+          ],
+          "urgency": "CRITICAL",
+          "potential_conditions": [
+            "placental abruption",
+            "preeclampsia",
+            "preterm labor",
+            "cord prolapse"
+          ],
+          "questions": [
+            "How many weeks pregnant are you?",
+            "Are you experiencing vaginal bleeding?",
+            "Is there severe abdominal pain?",
+            "Have you noticed decreased fetal movement?",
+            "Do you have a severe headache or vision changes?",
+            "Is there sudden swelling of hands or face?",
+            "Are you leaking fluid?"
+          ],
+          "immediate_action": "Call emergency services or go to labor and delivery immediately."
+        }
+      ]
+    }
+  },
+  "urgency_levels": {
+    "CRITICAL": {
+      "description": "Life-threatening, requires immediate emergency services",
+      "response_time": "Call 911 immediately",
+      "color": "red"
+    },
+    "HIGH": {
+      "description": "Urgent, requires care within hours",
+      "response_time": "Go to ER or urgent care within 2-4 hours",
+      "color": "orange"
+    },
+    "MODERATE": {
+      "description": "Should see doctor within 24-48 hours",
+      "response_time": "Schedule appointment within 1-2 days",
+      "color": "yellow"
+    },
+    "LOW": {
+      "description": "Routine, can wait for regular appointment",
+      "response_time": "Schedule routine appointment",
+      "color": "green"
+    }
+  },
+  "general_questions": {
+    "onset": "When did this start?",
+    "duration": "How long has this been going on?",
+    "severity": "On a scale of 1-10, how severe is this?",
+    "progression": "Is it getting better, worse, or staying the same?",
+    "associated_symptoms": "Are you experiencing any other symptoms?",
+    "interventions": "Have you tried anything to help? Did it work?",
+    "medical_history": "Do you have any relevant medical history?",
+    "medications": "Are you taking any medications?"
+  }
+}
