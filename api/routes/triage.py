@@ -352,11 +352,21 @@ def create_triage_blueprint(
                 # Format for display
                 formatted_report = services["report_generator"].format_for_display(report_result)
                 
+                # Extract conditions for booking recommendations
+                conditions = []
+                for diff in report_result.get("suggested_differential", []):
+                    cond = diff.get("condition")
+                    if isinstance(cond, list):
+                        conditions.extend(cond)
+                    elif cond:
+                        conditions.append(cond)
+                
                 return jsonify({
                     "session_id": session_id,
                     "state": "COMPLETE",
                     "report": report_result,
                     "report_display": formatted_report,
+                    "conditions": conditions,  # For booking recommendations
                     "disclaimer": report_result.get("disclaimer")
                 }), 200
             

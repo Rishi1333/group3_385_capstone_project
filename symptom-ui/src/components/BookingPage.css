@@ -1,0 +1,577 @@
+/**
+ * BookingPage Styles
+ */
+
+.booking-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  padding: 2rem;
+}
+
+.booking-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+}
+
+/* Progress Bar */
+.progress-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+  padding: 1rem;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.progress-step.active {
+  opacity: 1;
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-tertiary, #e0e0e0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.progress-step.active .step-number {
+  background: var(--accent-primary, #00d4aa);
+  color: white;
+}
+
+.step-label {
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+}
+
+.progress-line {
+  width: 60px;
+  height: 2px;
+  background: var(--border-default, #ddd);
+  margin: 0 0.5rem;
+}
+
+/* Step Content */
+.step-content {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.step-content h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary, #1a1a2e);
+}
+
+.step-content h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary, #1a1a2e);
+}
+
+/* Recommendation Message */
+.recommendation-message {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 212, 170, 0.1) 0%,
+    rgba(0, 212, 170, 0.05) 100%
+  );
+  border: 1px solid rgba(0, 212, 170, 0.3);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.recommendation-message p {
+  margin: 0;
+  color: var(--text-primary, #1a1a2e);
+}
+
+/* Location Section */
+.location-section {
+  margin-bottom: 2rem;
+}
+
+.location-detected {
+  color: var(--accent-primary, #00d4aa);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.location-manual {
+  color: var(--text-secondary, #666);
+}
+
+.location-actions {
+  margin-top: 1rem;
+}
+
+/* Clinics List */
+.clinics-list {
+  margin-top: 1.5rem;
+}
+
+.clinic-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.25rem;
+  border: 1px solid var(--border-default, #e0e0e0);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+}
+
+.clinic-card:hover {
+  border-color: var(--accent-primary, #00d4aa);
+  box-shadow: 0 2px 8px rgba(0, 212, 170, 0.15);
+}
+
+.clinic-info h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: var(--text-primary, #1a1a2e);
+}
+
+.clinic-address,
+.clinic-phone {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #666);
+  margin: 0.25rem 0;
+}
+
+.clinic-distance {
+  font-size: 0.85rem;
+  color: var(--accent-primary, #00d4aa);
+  font-weight: 500;
+  margin: 0.5rem 0 0 0;
+}
+
+.clinic-specialties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.specialty-tag {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--bg-tertiary, #f0f0f0);
+  border-radius: 20px;
+  color: var(--text-secondary, #666);
+}
+
+.clinic-rating {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Doctors List */
+.doctors-list {
+  margin-top: 1.5rem;
+}
+
+.selected-clinic {
+  background: var(--bg-tertiary, #f5f5f5);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.selected-clinic h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+}
+
+.selected-clinic p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #666);
+}
+
+.doctor-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem;
+  border: 1px solid var(--border-default, #e0e0e0);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+}
+
+.doctor-card:hover {
+  border-color: var(--accent-primary, #00d4aa);
+}
+
+.doctor-info h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+}
+
+.doctor-specialty {
+  color: var(--accent-primary, #00d4aa);
+  font-weight: 500;
+  margin: 0;
+}
+
+.doctor-availability {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #666);
+  margin: 0.25rem 0 0 0;
+}
+
+/* Date & Time Section */
+.datetime-section {
+  margin-top: 1.5rem;
+}
+
+.date-section,
+.time-section {
+  margin-bottom: 2rem;
+}
+
+.date-section h3,
+.time-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.date-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.date-btn {
+  padding: 0.75rem;
+  border: 1px solid var(--border-default, #e0e0e0);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.date-btn:hover {
+  border-color: var(--accent-primary, #00d4aa);
+}
+
+.date-btn.selected {
+  background: var(--accent-primary, #00d4aa);
+  color: white;
+  border-color: var(--accent-primary, #00d4aa);
+}
+
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.time-btn {
+  padding: 0.75rem;
+  border: 1px solid var(--border-default, #e0e0e0);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.time-btn:hover {
+  border-color: var(--accent-primary, #00d4aa);
+}
+
+.time-btn.selected {
+  background: var(--accent-primary, #00d4aa);
+  color: white;
+  border-color: var(--accent-primary, #00d4aa);
+}
+
+.no-slots {
+  color: var(--text-secondary, #666);
+  font-style: italic;
+}
+
+/* Confirmation Step */
+.confirmation-step {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.confirmation-details {
+  margin: 1.5rem 0;
+}
+
+.detail-card {
+  background: var(--bg-tertiary, #f5f5f5);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.detail-card h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  border-bottom: 1px solid var(--border-default, #e0e0e0);
+  padding-bottom: 0.75rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-subtle, #f0f0f0);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row .label {
+  color: var(--text-secondary, #666);
+}
+
+.detail-row .value {
+  font-weight: 500;
+  text-align: right;
+}
+
+.important-notes {
+  background: #fff8e1;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.important-notes h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  color: #f57c00;
+}
+
+.important-notes ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.important-notes li {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #666);
+  margin-bottom: 0.5rem;
+}
+
+/* Success Step */
+.success-step {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: white;
+}
+
+.booking-details {
+  background: var(--bg-tertiary, #f5f5f5);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.booking-id {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #666);
+  margin-bottom: 1rem;
+}
+
+.confirmed-info p {
+  margin: 0.25rem 0;
+}
+
+.success-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 212, 170, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: white;
+  color: var(--text-primary, #1a1a2e);
+  border: 1px solid var(--border-default, #e0e0e0);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent-primary, #00d4aa);
+}
+
+.btn-back {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #666);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  padding: 0;
+}
+
+.btn-back:hover {
+  color: var(--accent-primary, #00d4aa);
+}
+
+.btn-continue,
+.btn-confirm {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  font-size: 1.1rem;
+}
+
+/* Error & Loading States */
+.error-message {
+  background: #ffebee;
+  border: 1px solid #ef5350;
+  color: #c62828;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary, #666);
+}
+
+.no-results {
+  text-align: center;
+  color: var(--text-secondary, #666);
+  padding: 2rem;
+}
+
+/* Selection Summary */
+.selection-summary {
+  background: var(--bg-tertiary, #f5f5f5);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-item {
+  padding: 0.5rem 0;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .booking-page {
+    padding: 1rem;
+  }
+
+  .booking-container {
+    padding: 1.5rem;
+  }
+
+  .progress-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .progress-line {
+    display: none;
+  }
+
+  .clinic-card,
+  .doctor-card {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .date-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .time-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .success-actions {
+    flex-direction: column;
+  }
+}

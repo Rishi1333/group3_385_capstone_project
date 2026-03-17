@@ -1,3 +1,36 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Environment
+.env
+.env.*
+
+# Notebooks
+inference.ipynb
+
+# Artifacts, models, and local DBs
+artifacts/
+chroma_db/
+chroma-db/
+
+# Node
+node_modules/
+symptom-ui/node_modules/
+
+# Logs and temp
+*.log
+*.tmp
+
+# Editor
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
 # Virtual environment
 .venv/
 venv/

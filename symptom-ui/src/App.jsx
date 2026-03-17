@@ -1,10 +1,12 @@
 ﻿import { useState, useEffect, useRef, useCallback } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import LandingPage from "./components/LandingPage";
 import PatientDashboard from "./components/PatientDashboard";
 import VoiceButton from "./components/VoiceButton";
 import VoiceSettings from "./components/VoiceSettings";
+import BookingPage from "./components/BookingPage";
 import {
   getTextToSpeech,
   initializeTTS,
@@ -190,7 +192,7 @@ function CloseIcon() {
 // Message Bubble Component
 // ============================================
 
-function MessageBubble({ message, isLatest }) {
+function MessageBubble({ message, isLatest, onBookAppointment }) {
   const isBot = message.role === "bot";
   const isEmergency = message.type === "emergency";
   const isReport = message.type === "report";
@@ -260,15 +262,9 @@ function MessageBubble({ message, isLatest }) {
                 thead: ({ children }) => (
                   <thead className="report-thead">{children}</thead>
                 ),
-                th: ({ children }) => (
-                  <th className="report-th">{children}</th>
-                ),
-                td: ({ children }) => (
-                  <td className="report-td">{children}</td>
-                ),
-                tr: ({ children }) => (
-                  <tr className="report-tr">{children}</tr>
-                ),
+                th: ({ children }) => <th className="report-th">{children}</th>,
+                td: ({ children }) => <td className="report-td">{children}</td>,
+                tr: ({ children }) => <tr className="report-tr">{children}</tr>,
                 blockquote: ({ children }) => (
                   <blockquote className="report-quote">{children}</blockquote>
                 ),
@@ -298,6 +294,70 @@ function MessageBubble({ message, isLatest }) {
             >
               {message.text}
             </ReactMarkdown>
+
+            {/* Book Appointment Button after report */}
+            {isReport && message.conditions && onBookAppointment && (
+              <div
+                className="booking-cta"
+                style={{
+                  marginTop: "1.5rem",
+                  padding: "1rem",
+                  background:
+                    "linear-gradient(135deg, rgba(0, 212, 170, 0.1) 0%, rgba(0, 212, 170, 0.05) 100%)",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(0, 212, 170, 0.3)",
+                }}
+              >
+                <p
+                  style={{ margin: "0 0 1rem 0", color: "var(--text-primary)" }}
+                >
+                  Based on your diagnosis, would you like to book an appointment
+                  with a specialist?
+                </p>
+                <button
+                  onClick={() =>
+                    onBookAppointment(message.conditions, message.reportId)
+                  }
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    padding: "0.75rem 1.5rem",
+                    background:
+                      "linear-gradient(135deg, #00d4aa 0%, #00b894 100%)",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "1rem",
+                    fontWeight: "500",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="18"
+                      rx="2"
+                      ry="2"
+                    ></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                  Book Appointment
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ lineHeight: 1.6 }}>
@@ -507,7 +567,7 @@ function ImageUploader({ onImageSelect, disabled, preview }) {
 // Main App Component
 // ============================================
 
-export default function App() {
+function App() {
   // Auth state
   const [auth, setAuth] = useState(() => {
     try {
@@ -575,10 +635,10 @@ export default function App() {
 
   // Helper functions
   const pushMessage = useCallback(
-    (role, text, type = null) => {
+    (role, text, type = null, conditions = null, reportId = null) => {
       setMessages((prev) => [
         ...prev,
-        { role, text, type, timestamp: Date.now() },
+        { role, text, type, timestamp: Date.now(), conditions, reportId },
       ]);
 
       // Auto-speak bot messages
@@ -729,7 +789,13 @@ export default function App() {
         pushMessage("bot", data.question);
       } else if (data.state === "COMPLETE" && data.report) {
         setTriageState(TriageState.COMPLETE);
-        pushMessage("bot", data.report_display, "report");
+        pushMessage(
+          "bot",
+          data.report_display,
+          "report",
+          data.conditions,
+          data.report?.report_id,
+        );
       }
     } catch (error) {
       pushMessage("bot", `Error: ${error.message}`);
@@ -745,6 +811,12 @@ export default function App() {
     startTriage,
     auth?.token,
   ]);
+
+  // Handle booking navigation
+  const handleBookAppointment = useCallback((conditions, reportId) => {
+    // Navigate to booking page - this will be handled by the Router
+    window.location.href = `/booking?conditions=${encodeURIComponent(JSON.stringify(conditions))}&reportId=${reportId || ""}`;
+  }, []);
 
   // Handle image selection
   const handleImageSelect = useCallback((file) => {
@@ -765,7 +837,13 @@ export default function App() {
       const isRegister = authMode === "register";
       const { role, gender, email, password, full_name } = authForm;
 
-      if (!role || !gender || !email || !password || (isRegister && !full_name)) {
+      if (
+        !role ||
+        !gender ||
+        !email ||
+        !password ||
+        (isRegister && !full_name)
+      ) {
         setAuthError("Please fill all required fields.");
         return;
       }
@@ -941,6 +1019,7 @@ export default function App() {
             key={i}
             message={msg}
             isLatest={i === messages.length - 1}
+            onBookAppointment={handleBookAppointment}
           />
         ))}
 
@@ -1054,4 +1133,16 @@ export default function App() {
   );
 }
 
+// Wrap App with Router for routing support
+function AppWithRouter() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/booking" element={<BookingPage />} />
+        <Route path="*" element={<App />} />
+      </Routes>
+    </Router>
+  );
+}
 
+export { AppWithRouter as default };

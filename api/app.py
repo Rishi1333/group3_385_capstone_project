@@ -22,6 +22,8 @@ from services.model_router import ModelRouter
 from routes.symptoms import create_prediction_blueprint, symptom_blueprint
 from routes.tts import tts_bp
 from routes.triage import create_triage_blueprint
+from routes.booking import create_booking_blueprint
+from services.clinic_service import get_clinic_service
 
 # RAG service imports
 from services.vector_store import VectorStore, VectorStoreFactory
@@ -257,6 +259,13 @@ def create_app():
         rag_service=rag_service
     )
     app.register_blueprint(triage_bp)
+    
+    # Register Booking blueprint
+    from mongo_db import get_db
+    clinic_service = get_clinic_service()
+    booking_bp = create_booking_blueprint(clinic_service, get_db())
+    app.register_blueprint(booking_bp)
+    logger.info("Booking service initialized")
 
     @app.route("/health")
     def health():

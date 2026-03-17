@@ -63,6 +63,15 @@ class TriageAgent:
             "medical_history": [],
             "medications": [],
             "risk_factors": [],
+            "allergies": [],  # NEW: Track allergies
+            "lifestyle": {  # NEW: Lifestyle factors
+                "smoking": None,  # 'never', 'former', 'current'
+                "alcohol": None,  # 'none', 'occasional', 'moderate', 'heavy'
+                "exercise": None  # 'none', 'light', 'moderate', 'active'
+            },
+            "family_history_details": [],  # NEW: Detailed family history
+            "recent_travel": None,  # NEW: Recent travel history
+            "occupation": None,  # NEW: Patient occupation
             "image_findings": None,
             "patient_profile": {
                 "age": None,
@@ -83,7 +92,14 @@ class TriageAgent:
         self.info_addressed = {
             "medical_history": False,
             "medications": False,
-            "risk_factors": False
+            "risk_factors": False,
+            "allergies": False,  # NEW
+            "lifestyle_smoking": False,  # NEW
+            "lifestyle_alcohol": False,  # NEW
+            "lifestyle_exercise": False,  # NEW
+            "family_history_details": False,  # NEW
+            "recent_travel": False,  # NEW
+            "occupation": False  # NEW
         }
         
         # Track which fields we've already asked about (prevents repeating questions)
@@ -332,6 +348,52 @@ Return ONLY valid JSON.
             re.search(r'\bno\s+(known\s+)?family\s+(health\s+)?(issues?|problems?|concerns?)\b', response_lower)):
             self.info_addressed["risk_factors"] = True
         
+        # NEW: Allergies patterns
+        if (re.search(r'\bno\s+allergies?\b', response_lower) or
+            re.search(r'\bnot\s+allergic\s+to\s+anything\b', response_lower) or
+            re.search(r'\bno\s+known\s+allergies?\b', response_lower)):
+            self.info_addressed["allergies"] = True
+        
+        # NEW: Smoking patterns
+        if re.search(r'\b(i\s+don\'?t|do\s+not|never)\s+(smoke|smoked|use\s+tobacco)\b', response_lower):
+            self.clinical_data["lifestyle"]["smoking"] = "never"
+            self.info_addressed["lifestyle_smoking"] = True
+        elif re.search(r'\b(former|ex-?smoker|quit\s+smoking)\b', response_lower):
+            self.clinical_data["lifestyle"]["smoking"] = "former"
+            self.info_addressed["lifestyle_smoking"] = True
+        elif re.search(r'\b(currently?\s+)?smoke|smoking|tobacco\b', response_lower):
+            self.clinical_data["lifestyle"]["smoking"] = "current"
+            self.info_addressed["lifestyle_smoking"] = True
+        
+        # NEW: Exercise patterns
+        if re.search(r'\b(no|don\'?t|do\s+not)\s+(exercise|work\s+out|workout)\b', response_lower):
+            self.clinical_data["lifestyle"]["exercise"] = "none"
+            self.info_addressed["lifestyle_exercise"] = True
+        elif re.search(r'\b(light|occasional)\s*(exercise|activity)?\b', response_lower):
+            self.clinical_data["lifestyle"]["exercise"] = "light"
+            self.info_addressed["lifestyle_exercise"] = True
+        elif re.search(r'\b(moderate|regular)\s*(exercise|activity)?\b', response_lower):
+            self.clinical_data["lifestyle"]["exercise"] = "moderate"
+            self.info_addressed["lifestyle_exercise"] = True
+        elif re.search(r'\b(active|daily|every\s+day|5\s*[+-]\s*times?)\b', response_lower):
+            self.clinical_data["lifestyle"]["exercise"] = "active"
+            self.info_addressed["lifestyle_exercise"] = True
+        
+        # NEW: Occupation patterns - extract occupation
+        occupation_match = re.search(r'\bi\s+(am|work)\s+(?:a\s+)?(\w+(?:\s+\w+)?)(?:\s+(?:by\s+profession|by\s+trade))?', response_lower)
+        if occupation_match:
+            self.clinical_data["occupation"] = occupation_match.group(2).title()
+            self.info_addressed["occupation"] = True
+        
+        # NEW: Travel patterns
+        if re.search(r'\bno\s+(recent\s+)?travel\b', response_lower) or re.search(r'\bhaven\'?t\s+traveled\b', response_lower):
+            self.clinical_data["recent_travel"] = "none"
+            self.info_addressed["recent_travel"] = True
+        elif re.search(r'\btraveled\s+to\s+(\w+(?:\s+\w+)?)\b', response_lower):
+            travel_match = re.search(r'\btraveled\s+to\s+(\w+(?:\s+\w+)?)\b', response_lower)
+            self.clinical_data["recent_travel"] = travel_match.group(1).title()
+            self.info_addressed["recent_travel"] = True
+        
         # Extract age (look for patterns like "I am 35", "35 years old", "age is 35")
         age_patterns = [
             r'i am (\d{1,3})(?:\s*years?\s*old)?',
@@ -404,7 +466,8 @@ Return ONLY valid JSON.
         
         # If we've asked about all basic fields, transition regardless of answers
         # This prevents infinite loops when users don't answer questions
-        basic_fields = {"age", "sex", "medical_history", "medications", "risk_factors"}
+        # Updated to include new fields
+        basic_fields = {"age", "sex", "medical_history", "medications", "allergies", "risk_factors"}
         if self.asked_fields >= basic_fields:
             logger.info("Transitioning to analysis: all basic fields have been asked")
             return True
@@ -417,10 +480,12 @@ Return ONLY valid JSON.
         
         # Check if all required info categories have been addressed
         # (either has data or user confirmed "none")
+        # Updated to include new fields
         all_addressed = (
             (self.clinical_data["medical_history"] or self.info_addressed["medical_history"]) and
             (self.clinical_data["medications"] or self.info_addressed["medications"]) and
-            (self.clinical_data["risk_factors"] or self.info_addressed["risk_factors"])
+            (self.clinical_data["risk_factors"] or self.info_addressed["risk_factors"]) and
+            (self.clinical_data.get("allergies") or self.info_addressed.get("allergies", False))
         )
         
         logger.info(f"Transition check: all_addressed={all_addressed}, info_addressed={self.info_addressed}")
@@ -435,7 +500,8 @@ Return ONLY valid JSON.
             len(self.clinical_data["symptoms"]) +
             len(self.clinical_data["medical_history"]) +
             len(self.clinical_data["medications"]) +
-            len(self.clinical_data["risk_factors"])
+            len(self.clinical_data["risk_factors"]) +
+            len(self.clinical_data.get("allergies", []))
         )
         
         logger.info(f"Transition check: info_count={info_count}")
@@ -446,16 +512,40 @@ Return ONLY valid JSON.
         # Determine what we still need - skip fields we've already asked about
         missing = []
         
+        # Basic profile info
         if self.clinical_data["patient_profile"]["age"] is None and "age" not in self.asked_fields:
             missing.append("age")
         if self.clinical_data["patient_profile"]["sex"] is None and "sex" not in self.asked_fields:
             missing.append("sex")
+        
+        # Medical history and medications
         if not self.clinical_data["medical_history"] and not self.info_addressed["medical_history"] and "medical_history" not in self.asked_fields:
             missing.append("medical_history")
         if not self.clinical_data["medications"] and not self.info_addressed["medications"] and "medications" not in self.asked_fields:
             missing.append("medications")
+        
+        # NEW: Allergies
+        if not self.clinical_data["allergies"] and not self.info_addressed["allergies"] and "allergies" not in self.asked_fields:
+            missing.append("allergies")
+        
+        # Risk factors and family history
         if not self.clinical_data["risk_factors"] and not self.info_addressed["risk_factors"] and "risk_factors" not in self.asked_fields:
             missing.append("risk_factors")
+        if not self.clinical_data["family_history_details"] and not self.info_addressed["family_history_details"] and "family_history_details" not in self.asked_fields:
+            missing.append("family_history_details")
+        
+        # NEW: Lifestyle factors
+        lifestyle = self.clinical_data.get("lifestyle", {})
+        if lifestyle.get("smoking") is None and not self.info_addressed.get("lifestyle_smoking") and "lifestyle_smoking" not in self.asked_fields:
+            missing.append("lifestyle_smoking")
+        if lifestyle.get("exercise") is None and not self.info_addressed.get("lifestyle_exercise") and "lifestyle_exercise" not in self.asked_fields:
+            missing.append("lifestyle_exercise")
+        
+        # NEW: Occupation and travel
+        if self.clinical_data.get("occupation") is None and not self.info_addressed.get("occupation") and "occupation" not in self.asked_fields:
+            missing.append("occupation")
+        if self.clinical_data.get("recent_travel") is None and not self.info_addressed.get("recent_travel") and "recent_travel" not in self.asked_fields:
+            missing.append("recent_travel")
         
         # Debug logging
         logger.info(f"Generating next question. Missing: {missing}, Info addressed: {self.info_addressed}, "
@@ -537,13 +627,19 @@ Return ONLY the question as a single sentence.
             
         except Exception as e:
             logger.error(f"Error generating question: {e}")
-            # Fallback questions
+            # Fallback questions including new fields
             fallback_questions = {
                 "age": "What is your age?",
                 "sex": "What is your biological sex?",
                 "medical_history": "Do you have any existing medical conditions?",
                 "medications": "Are you currently taking any medications?",
-                "risk_factors": "Do you have any family history of medical conditions?"
+                "allergies": "Do you have any known allergies (medications, food, or environmental)?",
+                "risk_factors": "Do you have any lifestyle risk factors (smoking, alcohol use)?",
+                "family_history_details": "Does anyone in your immediate family have any chronic conditions like diabetes, heart disease, or cancer?",
+                "lifestyle_smoking": "Do you currently smoke or use tobacco products?",
+                "lifestyle_exercise": "How often do you exercise per week? (none, light, moderate, or active)",
+                "occupation": "What is your occupation?",
+                "recent_travel": "Have you traveled outside your usual area in the past 2 weeks?"
             }
             
             for key in missing:
