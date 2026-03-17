@@ -1,0 +1,67 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Environment
+.env
+.env.*
+
+# Notebooks
+inference.ipynb
+
+# Artifacts, models, and local DBs
+artifacts/
+chroma_db/
+chroma-db/
+
+# Node
+node_modules/
+symptom-ui/node_modules/
+
+# Logs and temp
+*.log
+*.tmp
+
+# Editor
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+# Virtual environment
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Node modules
+node_modules/
+**/node_modules/
+
+# Plans directory
+plans/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+
+# Runtime data and logs
+chroma_db/
+chromadb*.log
+
+
+
+artifacts/
+*.pkl
