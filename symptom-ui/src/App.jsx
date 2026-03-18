@@ -17,6 +17,37 @@ import "./App.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:3000";
 const AUTH_STORAGE_KEY = "virtual_clinic_auth";
+const REPORTS_STORAGE_PREFIX = "virtual_clinic_reports_";
+
+const normalizeRole = (role) => {
+  const value = String(role || "").trim().toLowerCase();
+  if (value === "patient") return "patients";
+  if (value === "doctor") return "doctors";
+  if (value === "admin") return "administrator";
+  return value;
+};
+
+const isPatientRole = (role) => normalizeRole(role) === "patients";
+
+const reportsStorageKey = (email) =>
+  `${REPORTS_STORAGE_PREFIX}${String(email || "").trim().toLowerCase()}`;
+
+const mergeReports = (...lists) => {
+  const merged = [];
+  const seen = new Set();
+
+  lists.flat().forEach((report, index) => {
+    if (!report || typeof report !== "object") return;
+    const key =
+      report.report_id ||
+      `${report.generated_at || report.stored_at || "no-date"}-${index}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    merged.push(report);
+  });
+
+  return merged;
+};
 
 // Triage state constants
 const TriageState = {
@@ -581,8 +612,6 @@ function App() {
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState("");
   const [authForm, setAuthForm] = useState({
-    role: "patients",
-    gender: "male",
     full_name: "",
     email: "",
     password: "",
@@ -605,13 +634,27 @@ function App() {
   const [dbBusy, setDbBusy] = useState(false);
   const [dbError, setDbError] = useState("");
   const [dbData, setDbData] = useState(null);
+  const [patientReports, setPatientReports] = useState([]);
+  const [adminTab, setAdminTab] = useState("doctors");
+  const [doctorTab, setDoctorTab] = useState("patients");
+  const [doctorForm, setDoctorForm] = useState({
+    email: "",
+    password: "",
+    full_name: "",
+    specialty: "",
+  });
+  const [doctorCreateBusy, setDoctorCreateBusy] = useState(false);
+  const [doctorCreateError, setDoctorCreateError] = useState("");
+  const [doctorCreateSuccess, setDoctorCreateSuccess] = useState("");
 
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
   const ttsRef = useRef(null);
 
   const isAuthenticated = Boolean(auth?.token);
-  const isPatientRole = auth?.role === "patients";
+  const isAdminWorkspace = auth?.role === "administrator";
+  const isDoctorWorkspace = auth?.role === "doctors";
+  const isBackofficeWorkspace = isAdminWorkspace || isDoctorWorkspace;
 
   // Initialize TTS
   useEffect(() => {
@@ -669,16 +712,17 @@ function App() {
     inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, []);
 
-  const saveAuth = useCallback((payload, selectedGender = null) => {
+  const saveAuth = useCallback((payload) => {
+    const role = normalizeRole(payload.role || payload.user?.role);
     const next = {
       token: payload.token || payload.access_token,
-      role: payload.role,
+      role,
       email: payload.email || payload.user?.email,
+      full_name: payload.full_name || payload.user?.full_name || "",
       gender:
         payload.gender ||
         payload.user?.gender ||
         payload.profile?.gender ||
-        selectedGender ||
         "male",
     };
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(next));
@@ -691,8 +735,89 @@ function App() {
     setDbModalOpen(false);
     setDbData(null);
     setDbError("");
+    setPatientReports([]);
+    setDoctorCreateError("");
+    setDoctorCreateSuccess("");
     resetTriage();
   }, [resetTriage]);
+
+  const readLocalReports = useCallback((email) => {
+    if (!email) return [];
+    try {
+      const raw = localStorage.getItem(reportsStorageKey(email));
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const writeLocalReports = useCallback((email, reports) => {
+    if (!email) return;
+    localStorage.setItem(
+      reportsStorageKey(email),
+      JSON.stringify(Array.isArray(reports) ? reports : []),
+    );
+  }, []);
+
+  const addReportToDashboard = useCallback(
+    (report) => {
+      if (!report || !isPatientRole(auth?.role)) return;
+      setPatientReports((prev) => {
+        const next = mergeReports([report], prev);
+        writeLocalReports(auth?.email, next);
+        return next;
+      });
+    },
+    [auth?.role, auth?.email, writeLocalReports],
+  );
+
+  // Fetch saved clinical reports for patient dashboard
+  const fetchPatientReports = useCallback(async () => {
+    if (!auth?.token || !isPatientRole(auth?.role)) {
+      setPatientReports([]);
+      return;
+    }
+
+    const localReports = readLocalReports(auth?.email);
+
+    try {
+      const response = await fetch(`${API_BASE}/auth/profile`, {
+        headers: { Authorization: `Bearer ${auth.token}` },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          logout();
+          return;
+        }
+        throw new Error(data?.error || "Failed to load patient reports");
+      }
+
+      const reports = Array.isArray(data?.clinical_reports)
+        ? data.clinical_reports
+        : [];
+      const merged = mergeReports(reports, localReports);
+      setPatientReports(merged);
+      writeLocalReports(auth?.email, merged);
+    } catch (error) {
+      console.error("Failed to fetch patient reports:", error);
+      setPatientReports(localReports);
+    }
+  }, [
+    auth?.token,
+    auth?.role,
+    auth?.email,
+    logout,
+    readLocalReports,
+    writeLocalReports,
+  ]);
+
+  useEffect(() => {
+    fetchPatientReports();
+  }, [fetchPatientReports]);
 
   // Start triage session
   const startTriage = useCallback(
@@ -738,7 +863,15 @@ function App() {
           pushMessage("bot", data.question);
         } else if (data.state === "COMPLETE" && data.report) {
           setTriageState(TriageState.COMPLETE);
-          pushMessage("bot", data.report_display, "report");
+          pushMessage(
+            "bot",
+            data.report_display,
+            "report",
+            data.conditions,
+            data.report?.report_id,
+          );
+          addReportToDashboard(data.report);
+          fetchPatientReports();
         }
       } catch (error) {
         pushMessage("bot", `Error: ${error.message}`);
@@ -747,7 +880,7 @@ function App() {
         setBusy(false);
       }
     },
-    [pushMessage, auth?.token],
+    [pushMessage, auth?.token, addReportToDashboard, fetchPatientReports],
   );
 
   // Send message
@@ -796,6 +929,8 @@ function App() {
           data.conditions,
           data.report?.report_id,
         );
+        addReportToDashboard(data.report);
+        fetchPatientReports();
       }
     } catch (error) {
       pushMessage("bot", `Error: ${error.message}`);
@@ -810,6 +945,8 @@ function App() {
     pushMessage,
     startTriage,
     auth?.token,
+    addReportToDashboard,
+    fetchPatientReports,
   ]);
 
   // Handle booking navigation
@@ -835,15 +972,9 @@ function App() {
       if (authBusy) return;
 
       const isRegister = authMode === "register";
-      const { role, gender, email, password, full_name } = authForm;
+      const { email, password, full_name } = authForm;
 
-      if (
-        !role ||
-        !gender ||
-        !email ||
-        !password ||
-        (isRegister && !full_name)
-      ) {
+      if (!email || !password || (isRegister && !full_name)) {
         setAuthError("Please fill all required fields.");
         return;
       }
@@ -854,8 +985,8 @@ function App() {
       try {
         const endpoint = isRegister ? "/auth/register" : "/auth/login";
         const payload = isRegister
-          ? { role, email, password, full_name }
-          : { role, email, password };
+          ? { email, password, full_name }
+          : { email, password };
 
         const response = await fetch(`${API_BASE}${endpoint}`, {
           method: "POST",
@@ -869,11 +1000,10 @@ function App() {
           throw new Error(data?.error || "Authentication failed");
         }
 
-        saveAuth(data, gender);
+        saveAuth(data);
         resetTriage();
         setAuthForm((prev) => ({
           ...prev,
-          gender: prev.gender || "male",
           full_name: "",
           email: "",
           password: "",
@@ -896,7 +1026,11 @@ function App() {
 
     try {
       const endpoint =
-        auth.role === "administrator" ? "/auth/admin/users" : "/auth/profile";
+        auth.role === "administrator"
+          ? "/auth/admin/users"
+          : auth.role === "doctors"
+            ? "/auth/doctor/patients"
+            : "/auth/profile";
       const response = await fetch(`${API_BASE}${endpoint}`, {
         headers: { Authorization: `Bearer ${auth.token}` },
       });
@@ -919,6 +1053,639 @@ function App() {
       setDbBusy(false);
     }
   }, [auth, logout]);
+
+  useEffect(() => {
+    if (isAdminWorkspace) {
+      fetchDatabaseData();
+    }
+  }, [isAdminWorkspace, fetchDatabaseData]);
+
+  const handleCreateDoctor = useCallback(async () => {
+    if (!auth?.token || auth?.role !== "administrator" || doctorCreateBusy) {
+      return;
+    }
+
+    const { email, password, full_name, specialty } = doctorForm;
+    if (!email || !password) {
+      setDoctorCreateError("Doctor email and password are required.");
+      setDoctorCreateSuccess("");
+      return;
+    }
+
+    setDoctorCreateBusy(true);
+    setDoctorCreateError("");
+    setDoctorCreateSuccess("");
+
+    try {
+      const response = await fetch(`${API_BASE}/auth/admin/doctors`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          full_name,
+          specialty,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to create doctor account");
+      }
+
+      setDoctorCreateSuccess("Doctor account created.");
+      setDoctorForm({
+        email: "",
+        password: "",
+        full_name: "",
+        specialty: "",
+      });
+      fetchDatabaseData();
+    } catch (error) {
+      setDoctorCreateError(error.message);
+    } finally {
+      setDoctorCreateBusy(false);
+    }
+  }, [auth?.token, auth?.role, doctorForm, doctorCreateBusy, fetchDatabaseData]);
+
+  const modalTitle =
+    auth?.role === "administrator"
+      ? "Administration"
+      : auth?.role === "doctors"
+        ? "Patient Records"
+        : "My Profile";
+
+  const formatDateTime = (value) => {
+    if (!value) return "Not available";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return parsed.toLocaleString();
+  };
+
+  const buildDoctorHoursMock = () => {
+    const name = auth?.full_name || auth?.email?.split("@", 1)?.[0] || "Doctor";
+    const hourlyRate = 72;
+    const shifts = [
+      { day: "Monday", hours: 8.0, patients: 9 },
+      { day: "Tuesday", hours: 7.5, patients: 8 },
+      { day: "Wednesday", hours: 9.0, patients: 11 },
+      { day: "Thursday", hours: 8.5, patients: 10 },
+      { day: "Friday", hours: 6.5, patients: 7 },
+    ];
+    const totalHours = shifts.reduce((sum, shift) => sum + shift.hours, 0);
+    const estimatedPay = totalHours * hourlyRate;
+
+    return { name, hourlyRate, shifts, totalHours, estimatedPay };
+  };
+
+  const renderUserCard = (user, kind = "user") => {
+    const reportCount = Array.isArray(user?.clinical_reports)
+      ? user.clinical_reports.length
+      : 0;
+
+    return (
+      <article
+        key={`${kind}-${user?._id || user?.email}`}
+        className="directory-card"
+      >
+        <div className="directory-card-header">
+          <div>
+            <h4>{user?.full_name || "Unnamed account"}</h4>
+            <p>{user?.email || "No email"}</p>
+          </div>
+          <span className="directory-pill">{kind}</span>
+        </div>
+        {user?.specialty && (
+          <p className="directory-meta">Specialty: {user.specialty}</p>
+        )}
+        {kind === "patient" && (
+          <p className="directory-meta">Saved reports: {reportCount}</p>
+        )}
+      </article>
+    );
+  };
+
+  const renderPatientRecordCard = (patient) => {
+    const reports = Array.isArray(patient?.clinical_reports)
+      ? patient.clinical_reports
+      : [];
+    const bookings = Array.isArray(patient?.bookings)
+      ? patient.bookings
+      : [];
+
+    return (
+      <article
+        key={`patient-dashboard-${patient?._id || patient?.email}`}
+        className="patient-admin-card"
+      >
+        <div className="patient-admin-header">
+          <div>
+            <h4>{patient?.full_name || "Patient user"}</h4>
+            <p>{patient?.email || "No email"}</p>
+          </div>
+          <span className="directory-pill">patient</span>
+        </div>
+
+        <div className="patient-admin-summary">
+          <span>{reports.length} report(s)</span>
+          <span>{bookings.length} booking(s)</span>
+        </div>
+
+        <section className="patient-admin-section">
+          <h5>Saved Reports</h5>
+          {reports.length > 0 ? (
+            <div className="patient-admin-list">
+              {reports.slice(0, 4).map((report, index) => {
+                const nextSteps = Array.isArray(report?.recommended_next_steps)
+                  ? report.recommended_next_steps
+                  : [];
+                const riskSummary =
+                  report?.risk_assessment?.summary ||
+                  report?.risk_assessment?.overall_risk_level ||
+                  report?.risk_assessment?.level ||
+                  "No risk summary recorded";
+
+                return (
+                  <details
+                    key={`${report?.report_id || index}-report`}
+                    className="patient-admin-item patient-admin-details"
+                  >
+                    <summary>
+                      <strong>{report?.report_id || "Report"}</strong>
+                      <span>
+                        {report?.chief_complaint ||
+                          report?.clinical_snapshot?.chief_complaint ||
+                          "No complaint recorded"}
+                      </span>
+                      <small>
+                        Generated: {formatDateTime(report?.generated_at || report?.stored_at)}
+                      </small>
+                    </summary>
+                    <div className="patient-admin-detail-body">
+                      <p>
+                        <strong>History:</strong>{" "}
+                        {report?.history_of_present_illness || "Not recorded"}
+                      </p>
+                      <p>
+                        <strong>Risk:</strong> {riskSummary}
+                      </p>
+                      {nextSteps.length > 0 && (
+                        <div>
+                          <strong>Recommended next steps</strong>
+                          <ul className="patient-admin-bullets">
+                            {nextSteps.slice(0, 5).map((step, stepIndex) => (
+                              <li key={`${report?.report_id || index}-step-${stepIndex}`}>
+                                {typeof step === "string"
+                                  ? step
+                                  : step?.action || JSON.stringify(step)}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </details>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="empty-state compact">No reports yet.</p>
+          )}
+        </section>
+
+        <section className="patient-admin-section">
+          <h5>Bookings</h5>
+          {bookings.length > 0 ? (
+            <div className="patient-admin-list">
+              {bookings.slice(0, 4).map((booking, index) => (
+                <div
+                  key={`${booking?.booking_id || index}-booking`}
+                  className="patient-admin-item"
+                >
+                  <strong>{booking?.booking_id || "Booking"}</strong>
+                  <span>
+                    {booking?.doctor_name || "Doctor"} at{" "}
+                    {booking?.clinic_name || "Clinic"}
+                  </span>
+                  <small>
+                    {booking?.date || "No date"} {booking?.time || ""}
+                  </small>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-state compact">No bookings yet.</p>
+          )}
+        </section>
+      </article>
+    );
+  };
+
+  const renderDatabaseBody = () => {
+    if (dbBusy && auth?.role !== "administrator") {
+      return (
+        <div className="loading-state">
+          <SpinnerIcon size={24} />
+          <span>Loading...</span>
+        </div>
+      );
+    }
+
+    if (!dbData && auth?.role !== "administrator") {
+      return <p className="empty-state">No data loaded</p>;
+    }
+
+    if (auth?.role === "administrator") {
+      const adminData = dbData || {};
+      const adminName =
+        adminData?.admin?.full_name || auth?.full_name || auth?.email || "Administrator";
+      const doctors = Array.isArray(adminData?.doctors) ? adminData.doctors : [];
+      const patients = Array.isArray(adminData?.patients) ? adminData.patients : [];
+      const totalBookings = patients.reduce(
+        (sum, patient) =>
+          sum + (Array.isArray(patient?.bookings) ? patient.bookings.length : 0),
+        0,
+      );
+
+      return (
+        <div className="admin-landing-shell">
+          <section className="admin-welcome-card">
+            <div className="admin-welcome-copy">
+              <p className="admin-page-kicker">Administration Workspace</p>
+              <h2>Welcome, {adminName}</h2>
+              <p>
+                Create doctor accounts, review patient reports, and monitor
+                bookings from one dashboard.
+              </p>
+            </div>
+            <div className="admin-stat-strip">
+              <article className="admin-stat-card">
+                <span>Doctors</span>
+                <strong>{doctors.length}</strong>
+              </article>
+              <article className="admin-stat-card">
+                <span>Patients</span>
+                <strong>{patients.length}</strong>
+              </article>
+              <article className="admin-stat-card">
+                <span>Bookings</span>
+                <strong>{totalBookings}</strong>
+              </article>
+            </div>
+          </section>
+
+          <section className="admin-tab-bar admin-surface-card">
+            <button
+              type="button"
+              className={`admin-tab-btn ${adminTab === "doctors" ? "is-active" : ""}`}
+              onClick={() => setAdminTab("doctors")}
+            >
+              Doctors
+            </button>
+            <button
+              type="button"
+              className={`admin-tab-btn ${adminTab === "patients" ? "is-active" : ""}`}
+              onClick={() => setAdminTab("patients")}
+            >
+              Patients
+            </button>
+          </section>
+
+          {adminTab === "doctors" ? (
+            <>
+              <section className="admin-create-panel admin-surface-card">
+                <div className="directory-section-heading">
+                  <div>
+                    <span className="admin-card-tag">Doctor Access</span>
+                    <h4>Create Doctor Account</h4>
+                  </div>
+                  <p>Use email and password to create doctor sign-in access.</p>
+                </div>
+                <div className="directory-form-grid">
+                  <input
+                    type="email"
+                    placeholder="Doctor email"
+                    value={doctorForm.email}
+                    onChange={(e) =>
+                      setDoctorForm((prev) => ({ ...prev, email: e.target.value }))
+                    }
+                  />
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={doctorForm.password}
+                    onChange={(e) =>
+                      setDoctorForm((prev) => ({ ...prev, password: e.target.value }))
+                    }
+                  />
+                  <input
+                    type="text"
+                    placeholder="Doctor name (optional)"
+                    value={doctorForm.full_name}
+                    onChange={(e) =>
+                      setDoctorForm((prev) => ({ ...prev, full_name: e.target.value }))
+                    }
+                  />
+                  <input
+                    type="text"
+                    placeholder="Specialty (optional)"
+                    value={doctorForm.specialty}
+                    onChange={(e) =>
+                      setDoctorForm((prev) => ({ ...prev, specialty: e.target.value }))
+                    }
+                  />
+                </div>
+                {doctorCreateError && (
+                  <div className="error-message">{doctorCreateError}</div>
+                )}
+                {doctorCreateSuccess && (
+                  <div className="success-message">{doctorCreateSuccess}</div>
+                )}
+                <button
+                  type="button"
+                  className="admin-create-btn"
+                  onClick={handleCreateDoctor}
+                  disabled={doctorCreateBusy}
+                >
+                  {doctorCreateBusy ? "Creating..." : "Create Doctor"}
+                </button>
+              </section>
+
+              <section className="directory-section admin-surface-card">
+                <div className="directory-section-heading">
+                  <div>
+                    <span className="admin-card-tag">Doctors</span>
+                    <h4>Registered Doctors</h4>
+                  </div>
+                  <p>{doctors.length} account(s)</p>
+                </div>
+                <div className="directory-grid">
+                  {doctors.length > 0 ? (
+                    doctors.map((doctor) => renderUserCard(doctor, "doctor"))
+                  ) : (
+                    <p className="empty-state compact">No doctor accounts yet.</p>
+                  )}
+                </div>
+              </section>
+            </>
+          ) : (
+            <section className="directory-section admin-surface-card">
+              <div className="directory-section-heading">
+                <div>
+                  <span className="admin-card-tag">Patient Dashboards</span>
+                  <h4>Patients, Reports, and Bookings</h4>
+                </div>
+                <p>{patients.length} account(s)</p>
+              </div>
+              <div className="patient-admin-grid">
+                {patients.length > 0 ? (
+                  patients.map((patient) => {
+                    const reports = Array.isArray(patient?.clinical_reports)
+                      ? patient.clinical_reports
+                      : [];
+                    const bookings = Array.isArray(patient?.bookings)
+                      ? patient.bookings
+                      : [];
+
+                    return (
+                      <article
+                        key={`patient-dashboard-${patient?._id || patient?.email}`}
+                        className="patient-admin-card"
+                      >
+                        <div className="patient-admin-header">
+                          <div>
+                            <h4>{patient?.full_name || "Patient user"}</h4>
+                            <p>{patient?.email || "No email"}</p>
+                          </div>
+                          <span className="directory-pill">patient</span>
+                        </div>
+
+                        <div className="patient-admin-summary">
+                          <span>{reports.length} report(s)</span>
+                          <span>{bookings.length} booking(s)</span>
+                        </div>
+
+                        <section className="patient-admin-section">
+                          <h5>Clinical Reports</h5>
+                          {reports.length > 0 ? (
+                            <div className="patient-admin-list">
+                              {reports.slice(0, 4).map((report, index) => (
+                                <div
+                                  key={`${report?.report_id || index}-report`}
+                                  className="patient-admin-item"
+                                >
+                                  <strong>{report?.report_id || "Report"}</strong>
+                                  <span>
+                                    {report?.chief_complaint ||
+                                      report?.clinical_snapshot?.chief_complaint ||
+                                      "No complaint recorded"}
+                                  </span>
+                                  <small>
+                                    Generated:{" "}
+                                    {formatDateTime(report?.generated_at || report?.stored_at)}
+                                  </small>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="empty-state compact">No reports yet.</p>
+                          )}
+                        </section>
+
+                        <section className="patient-admin-section">
+                          <h5>Bookings</h5>
+                          {bookings.length > 0 ? (
+                            <div className="patient-admin-list">
+                              {bookings.slice(0, 4).map((booking, index) => (
+                                <div
+                                  key={`${booking?.booking_id || index}-booking`}
+                                  className="patient-admin-item"
+                                >
+                                  <strong>{booking?.booking_id || "Booking"}</strong>
+                                  <span>
+                                    {booking?.doctor_name || "Doctor"} at{" "}
+                                    {booking?.clinic_name || "Clinic"}
+                                  </span>
+                                  <small>
+                                    {booking?.date || "No date"} {booking?.time || ""}
+                                  </small>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="empty-state compact">No bookings yet.</p>
+                          )}
+                        </section>
+                      </article>
+                    );
+                  })
+                ) : (
+                  <p className="empty-state compact">No patient accounts found.</p>
+                )}
+              </div>
+            </section>
+          )}
+        </div>
+      );
+    }
+
+    if (auth?.role === "doctors") {
+      const patients = Array.isArray(dbData?.patients) ? dbData.patients : [];
+      const totalReports = patients.reduce(
+        (sum, patient) =>
+          sum + (Array.isArray(patient?.clinical_reports) ? patient.clinical_reports.length : 0),
+        0,
+      );
+      const totalBookings = patients.reduce(
+        (sum, patient) =>
+          sum + (Array.isArray(patient?.bookings) ? patient.bookings.length : 0),
+        0,
+      );
+      const hoursMock = buildDoctorHoursMock();
+
+      return (
+        <div className="admin-landing-shell">
+          <section className="admin-welcome-card">
+            <div className="admin-welcome-copy">
+              <p className="admin-page-kicker">Doctor Workspace</p>
+              <h2>Patient dashboards and saved reports</h2>
+              <p>
+                Review patient records, open saved reports, and check bookings
+                without the symptom chat interface.
+              </p>
+            </div>
+            <div className="admin-stat-strip">
+              <article className="admin-stat-card">
+                <span>Patients</span>
+                <strong>{patients.length}</strong>
+              </article>
+              <article className="admin-stat-card">
+                <span>Reports</span>
+                <strong>{totalReports}</strong>
+              </article>
+              <article className="admin-stat-card">
+                <span>Bookings</span>
+                <strong>{totalBookings}</strong>
+              </article>
+            </div>
+          </section>
+
+          <section className="admin-tab-bar admin-surface-card">
+            <button
+              type="button"
+              className={`admin-tab-btn ${doctorTab === "patients" ? "is-active" : ""}`}
+              onClick={() => setDoctorTab("patients")}
+            >
+              Patients
+            </button>
+            <button
+              type="button"
+              className={`admin-tab-btn ${doctorTab === "hours" ? "is-active" : ""}`}
+              onClick={() => setDoctorTab("hours")}
+            >
+              My Hours
+            </button>
+          </section>
+
+          {doctorTab === "patients" ? (
+            <section className="directory-section admin-surface-card">
+              <div className="directory-section-heading">
+                <div>
+                  <span className="admin-card-tag">Patient Dashboards</span>
+                  <h4>Patients, Reports, and Bookings</h4>
+                </div>
+                <p>{patients.length} patient record(s)</p>
+              </div>
+              <div className="patient-admin-grid">
+                {patients.length > 0 ? (
+                  patients.map((patient) => renderPatientRecordCard(patient))
+                ) : (
+                  <p className="empty-state compact">No patient records found.</p>
+                )}
+              </div>
+            </section>
+          ) : (
+            <section className="directory-section admin-surface-card">
+              <div className="directory-section-heading">
+                <div>
+                  <span className="admin-card-tag">Weekly Hours</span>
+                  <h4>{hoursMock.name}</h4>
+                </div>
+                <p>Mock payroll view for this week</p>
+              </div>
+
+              <div className="hours-summary-grid">
+                <article className="hours-summary-card">
+                  <span>Total Hours</span>
+                  <strong>{hoursMock.totalHours.toFixed(1)}</strong>
+                </article>
+                <article className="hours-summary-card">
+                  <span>Hourly Rate</span>
+                  <strong>${hoursMock.hourlyRate.toFixed(2)}</strong>
+                </article>
+                <article className="hours-summary-card">
+                  <span>Estimated Pay</span>
+                  <strong>${hoursMock.estimatedPay.toFixed(2)}</strong>
+                </article>
+              </div>
+
+              <div className="hours-table">
+                <div className="hours-row hours-row-head">
+                  <span>Day</span>
+                  <span>Hours</span>
+                  <span>Patients Seen</span>
+                  <span>Daily Pay</span>
+                </div>
+                {hoursMock.shifts.map((shift) => (
+                  <div key={shift.day} className="hours-row">
+                    <span>{shift.day}</span>
+                    <span>{shift.hours.toFixed(1)}</span>
+                    <span>{shift.patients}</span>
+                    <span>${(shift.hours * hoursMock.hourlyRate).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      );
+    }
+
+    const profileReports = Array.isArray(dbData?.clinical_reports)
+      ? dbData.clinical_reports.length
+      : 0;
+
+    return (
+      <div className="directory-layout">
+        <section className="directory-section">
+          <div className="directory-section-heading">
+            <h4>Account Summary</h4>
+            <p>Your saved profile details</p>
+          </div>
+          <div className="directory-grid single-column">
+            <article className="directory-card">
+              <div className="directory-card-header">
+                <div>
+                  <h4>{dbData?.full_name || "Patient user"}</h4>
+                  <p>{dbData?.email || auth?.email}</p>
+                </div>
+                <span className="directory-pill">patient</span>
+              </div>
+              <p className="directory-meta">Saved reports: {profileReports}</p>
+              {dbData?.last_report_generated_at && (
+                <p className="directory-meta">
+                  Last report: {dbData.last_report_generated_at}
+                </p>
+              )}
+            </article>
+          </div>
+        </section>
+      </div>
+    );
+  };
 
   // Render auth screen if not authenticated
   if (!isAuthenticated) {
@@ -968,23 +1735,27 @@ function App() {
         </div>
 
         <div className="header-right">
-          <button
-            onClick={() => {
-              setDbModalOpen(true);
-              fetchDatabaseData();
-            }}
-            className="header-btn"
-          >
-            <DatabaseIcon />
-            <span>Database</span>
-          </button>
+          {!isBackofficeWorkspace && (
+            <button
+              onClick={() => {
+                setDbModalOpen(true);
+                fetchDatabaseData();
+              }}
+              className="header-btn"
+            >
+              <DatabaseIcon />
+              <span>Database</span>
+            </button>
+          )}
 
-          <button
-            onClick={() => setVoiceSettingsOpen(true)}
-            className="header-btn icon-only"
-          >
-            <SettingsIcon />
-          </button>
+          {!isBackofficeWorkspace && (
+            <button
+              onClick={() => setVoiceSettingsOpen(true)}
+              className="header-btn icon-only"
+            >
+              <SettingsIcon />
+            </button>
+          )}
 
           <button onClick={logout} className="header-btn">
             <LogoutIcon />
@@ -993,141 +1764,154 @@ function App() {
         </div>
       </header>
 
-      {/* State Indicator */}
-      <div className="state-bar">
-        <StateIndicator currentState={triageState} intent={intent} />
-
-        {triageState !== TriageState.IDLE && (
-          <button onClick={resetTriage} className="new-session-btn">
-            New Session
-          </button>
-        )}
-      </div>
-
-      {/* Messages Area */}
-      <div ref={scrollRef} className="messages-area">
-        {isPatientRole && (
-          <PatientDashboard
-            patientEmail={auth.email}
-            patientGender={auth.gender}
-            onFocusChatInput={focusChatInput}
-          />
-        )}
-
-        {messages.map((msg, i) => (
-          <MessageBubble
-            key={i}
-            message={msg}
-            isLatest={i === messages.length - 1}
-            onBookAppointment={handleBookAppointment}
-          />
-        ))}
-
-        {busy && (
-          <div className="typing-indicator">
-            <div className="typing-dots">
-              <span></span>
-              <span></span>
-              <span></span>
+      {isBackofficeWorkspace ? (
+        <main className="admin-page-shell">
+          <section className="admin-page-panel">
+            <div className="admin-page-heading">
+              <div>
+                <p className="admin-page-kicker">
+                  {isAdminWorkspace ? "Administration" : "Doctor Workspace"}
+                </p>
+                <h2>
+                  {isAdminWorkspace
+                    ? "Manage doctors and patient accounts"
+                    : "Review patient dashboards"}
+                </h2>
+              </div>
+              <button onClick={fetchDatabaseData} className="header-btn" disabled={dbBusy}>
+                {dbBusy ? <SpinnerIcon size={16} /> : <DatabaseIcon />}
+                <span>Refresh</span>
+              </button>
             </div>
-            <span>Analyzing...</span>
+            {dbError && <div className="error-message">{dbError}</div>}
+            {renderDatabaseBody()}
+          </section>
+        </main>
+      ) : (
+        <>
+          {/* State Indicator */}
+          <div className="state-bar">
+            <StateIndicator currentState={triageState} intent={intent} />
+
+            {triageState !== TriageState.IDLE && (
+              <button onClick={resetTriage} className="new-session-btn">
+                New Session
+              </button>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Input Area */}
-      <div className="input-area">
-        <ImageUploader
-          onImageSelect={handleImageSelect}
-          disabled={busy}
-          preview={imagePreview}
-        />
+          {/* Messages Area */}
+          <div ref={scrollRef} className="messages-area">
+            <PatientDashboard
+              patientEmail={auth.email}
+              patientReports={patientReports}
+              onFocusChatInput={focusChatInput}
+            />
 
-        {selectedImage && (
-          <button
-            onClick={() => {
-              setSelectedImage(null);
-              setImagePreview(null);
-            }}
-            className="remove-image-btn"
-          >
-            <CloseIcon />
-          </button>
-        )}
+            {messages.map((msg, i) => (
+              <MessageBubble
+                key={i}
+                message={msg}
+                isLatest={i === messages.length - 1}
+                onBookAppointment={handleBookAppointment}
+              />
+            ))}
 
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-          placeholder={
-            selectedImage
-              ? "Add context for the image..."
-              : "Describe your symptoms..."
-          }
-          disabled={busy}
-          className="message-input"
-        />
+            {busy && (
+              <div className="typing-indicator">
+                <div className="typing-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <span>Analyzing...</span>
+              </div>
+            )}
+          </div>
 
-        {isSpeechRecognitionSupported() && (
-          <VoiceButton
-            onResult={setInput}
-            onInterim={setInput}
-            onError={(err) => console.error("Voice error:", err)}
-            disabled={busy}
-            size="medium"
+          {/* Input Area */}
+          <div className="input-area">
+            <ImageUploader
+              onImageSelect={handleImageSelect}
+              disabled={busy}
+              preview={imagePreview}
+            />
+
+            {selectedImage && (
+              <button
+                onClick={() => {
+                  setSelectedImage(null);
+                  setImagePreview(null);
+                }}
+                className="remove-image-btn"
+              >
+                <CloseIcon />
+              </button>
+            )}
+
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+              placeholder={
+                selectedImage
+                  ? "Add context for the image..."
+                  : "Describe your symptoms..."
+              }
+              disabled={busy}
+              className="message-input"
+            />
+
+            {isSpeechRecognitionSupported() && (
+              <VoiceButton
+                onResult={setInput}
+                onInterim={setInput}
+                onError={(err) => console.error("Voice error:", err)}
+                disabled={busy}
+                size="medium"
+              />
+            )}
+
+            <button
+              onClick={sendMessage}
+              disabled={busy || (!input.trim() && !selectedImage)}
+              className="send-btn"
+            >
+              {busy ? <SpinnerIcon /> : <SendIcon />}
+            </button>
+          </div>
+
+          <VoiceSettings
+            open={voiceSettingsOpen}
+            onClose={() => setVoiceSettingsOpen(false)}
+            settings={voiceSettings}
+            onSettingsChange={setVoiceSettings}
           />
-        )}
 
-        <button
-          onClick={sendMessage}
-          disabled={busy || (!input.trim() && !selectedImage)}
-          className="send-btn"
-        >
-          {busy ? <SpinnerIcon /> : <SendIcon />}
-        </button>
-      </div>
-      {/* Voice Settings Modal */}
-      <VoiceSettings
-        open={voiceSettingsOpen}
-        onClose={() => setVoiceSettingsOpen(false)}
-        settings={voiceSettings}
-        onSettingsChange={setVoiceSettings}
-      />
-
-      {/* Database Modal */}
-      {dbModalOpen && (
-        <div className="modal-overlay" onClick={() => setDbModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Database Data</h3>
-              <div className="modal-actions">
-                <button onClick={fetchDatabaseData} disabled={dbBusy}>
-                  {dbBusy ? <SpinnerIcon size={16} /> : "Refresh"}
-                </button>
-                <button onClick={() => setDbModalOpen(false)}>
-                  <CloseIcon />
-                </button>
+          {dbModalOpen && (
+            <div className="modal-overlay" onClick={() => setDbModalOpen(false)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <h3>{modalTitle}</h3>
+                  <div className="modal-actions">
+                    <button onClick={fetchDatabaseData} disabled={dbBusy}>
+                      {dbBusy ? <SpinnerIcon size={16} /> : "Refresh"}
+                    </button>
+                    <button onClick={() => setDbModalOpen(false)}>
+                      <CloseIcon />
+                    </button>
+                  </div>
+                </div>
+                <div className="modal-body">
+                  {dbError && <div className="error-message">{dbError}</div>}
+                  {renderDatabaseBody()}
+                </div>
               </div>
             </div>
-            <div className="modal-body">
-              {dbError && <div className="error-message">{dbError}</div>}
-              {dbBusy ? (
-                <div className="loading-state">
-                  <SpinnerIcon size={24} />
-                  <span>Loading...</span>
-                </div>
-              ) : dbData ? (
-                <pre className="json-display">
-                  {JSON.stringify(dbData, null, 2)}
-                </pre>
-              ) : (
-                <p className="empty-state">No data loaded</p>
-              )}
-            </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
     </div>
   );

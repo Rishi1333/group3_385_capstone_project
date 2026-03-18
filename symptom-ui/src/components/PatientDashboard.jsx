@@ -1,39 +1,53 @@
-import { useEffect, useRef, useState } from "react";
-import "@google/model-viewer";
-import maleBodyModel from "../assets/male_body.glb";
-import femaleBodyModel from "../assets/study_human_female_sculpt.glb";
 import "./PatientDashboard.css";
 
 export default function PatientDashboard({
   patientEmail,
-  patientGender,
+  patientReports,
   onFocusChatInput,
 }) {
-  const modelRef = useRef(null);
-  const [autoRotate, setAutoRotate] = useState(true);
-  const normalizedGender = String(patientGender || "")
-    .trim()
-    .toLowerCase();
-  const useFemaleModel = ["female", "f", "woman", "girl"].includes(
-    normalizedGender,
-  );
-  const bodyModelSrc = useFemaleModel ? femaleBodyModel : maleBodyModel;
+  const reports = Array.isArray(patientReports) ? patientReports : [];
 
-  useEffect(() => {
-    if (modelRef.current) {
-      modelRef.current.autoRotate = autoRotate;
+  const formatDateTime = (value) => {
+    if (!value) return "Not available";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return parsed.toLocaleString();
+  };
+
+  const extractRiskLabel = (report) => {
+    const risk = report?.risk_assessment;
+    if (!risk) return "Unknown";
+    if (typeof risk === "string") return risk;
+    return (
+      risk?.overall_risk_level ||
+      risk?.level ||
+      risk?.summary ||
+      "Unknown"
+    );
+  };
+
+  const extractComplaint = (report) =>
+    report?.chief_complaint ||
+    report?.clinical_snapshot?.chief_complaint ||
+    "No chief complaint captured.";
+
+  const extractSymptoms = (report) => {
+    const symptoms = report?.clinical_snapshot?.symptoms;
+    if (!Array.isArray(symptoms) || symptoms.length === 0) {
+      return "No symptoms recorded";
     }
-  }, [autoRotate]);
+    return symptoms.slice(0, 4).join(", ");
+  };
 
   return (
     <main className="patient-dashboard" aria-label="Patient dashboard">
       <section className="patient-hero-card" aria-labelledby="patient-dashboard-title">
         <div className="patient-hero-copy">
           <p className="patient-kicker">Patient Dashboard</p>
-          <h2 id="patient-dashboard-title">Interactive body model for guided symptom intake</h2>
+          <h2 id="patient-dashboard-title">Guided symptom intake</h2>
           <p className="patient-description">
-            Rotate and inspect the anatomical model before starting your symptom
-            conversation.
+            Start your conversation with the clinical assistant to share your
+            symptoms and receive next-step guidance.
           </p>
 
           <dl className="patient-meta-list">
@@ -59,38 +73,46 @@ export default function PatientDashboard({
             >
               Start Symptom Chat
             </button>
-            <button
-              type="button"
-              className="patient-secondary-btn"
-              onClick={() => setAutoRotate((prev) => !prev)}
-              aria-pressed={autoRotate}
-            >
-              {autoRotate ? "Pause Rotation" : "Resume Rotation"}
-            </button>
           </div>
         </div>
 
-        <figure className="patient-model-panel">
-          <model-viewer
-            ref={modelRef}
-            src={bodyModelSrc}
-            alt="Interactive 3D anatomical human body model for symptom localization."
-            loading="eager"
-            camera-controls
-            shadow-intensity="0.45"
-            exposure="1.05"
-            interaction-prompt="auto"
-            environment-image="neutral"
-            touch-action="pan-y"
-            tabIndex="0"
-            aria-label="3D anatomy viewer"
-            className="patient-model-viewer"
-          />
-          <figcaption className="patient-model-help">
-            Drag to rotate, pinch or scroll to zoom, and use your keyboard focus
-            here for accessible navigation.
-          </figcaption>
-        </figure>
+        <section className="patient-reports" aria-labelledby="patient-reports-title">
+          <div className="patient-reports-header">
+            <h3 id="patient-reports-title">Saved Clinical Reports</h3>
+            <span className="patient-reports-count">{reports.length}</span>
+          </div>
+
+          {reports.length === 0 ? (
+            <p className="patient-reports-empty">
+              No saved reports yet. Complete a triage chat to generate one.
+            </p>
+          ) : (
+            <div className="patient-reports-grid">
+              {reports.slice(0, 6).map((report, index) => {
+                const reportId = report?.report_id || `REPORT-${index + 1}`;
+                const generatedAt = report?.generated_at || report?.stored_at;
+                const riskLabel = extractRiskLabel(report);
+                const complaint = extractComplaint(report);
+                const symptoms = extractSymptoms(report);
+
+                return (
+                  <article
+                    key={`${reportId}-${generatedAt || index}`}
+                    className="patient-report-card"
+                  >
+                    <p className="patient-report-id">{reportId}</p>
+                    <p className="patient-report-date">
+                      Generated: {formatDateTime(generatedAt)}
+                    </p>
+                    <p className="patient-report-risk">Risk: {riskLabel}</p>
+                    <p className="patient-report-complaint">{complaint}</p>
+                    <p className="patient-report-symptoms">Symptoms: {symptoms}</p>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </section>
     </main>
   );

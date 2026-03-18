@@ -181,7 +181,7 @@ export default function LandingPage({
                     <BrandMark />
                   </span>
                   <h2>AI Virtual Clinic</h2>
-                  <p>{isRegister ? "Create your account" : "Welcome back"}</p>
+                  <p>{isRegister ? "Create your patient account" : "Welcome back"}</p>
                 </div>
 
                 <div className="landing-auth-tabs" role="tablist" aria-label="Account access">
@@ -206,55 +206,26 @@ export default function LandingPage({
                 </div>
 
                 <form onSubmit={onSubmit} className="landing-auth-form">
-                  <div className="landing-form-group">
-                    <label htmlFor="landing-role">I am a</label>
-                    <select
-                      id="landing-role"
-                      value={form.role}
-                      onChange={(event) =>
-                        setForm((prev) => ({ ...prev, role: event.target.value }))
-                      }
-                      disabled={busy}
-                    >
-                      <option value="patients">Patient</option>
-                      <option value="doctors">Doctor</option>
-                      <option value="administrator">Administrator</option>
-                    </select>
-                  </div>
-
-                  <div className="landing-form-group">
-                    <label htmlFor="landing-gender">Gender</label>
-                    <select
-                      id="landing-gender"
-                      value={form.gender || "male"}
-                      onChange={(event) =>
-                        setForm((prev) => ({ ...prev, gender: event.target.value }))
-                      }
-                      disabled={busy}
-                    >
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                    </select>
-                  </div>
-
                   {isRegister && (
-                    <div className="landing-form-group">
-                      <label htmlFor="landing-full-name">Full name</label>
-                      <input
-                        id="landing-full-name"
-                        type="text"
-                        value={form.full_name}
-                        onChange={(event) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            full_name: event.target.value,
-                          }))
-                        }
-                        placeholder="Enter your full name"
-                        disabled={busy}
-                        autoComplete="name"
-                      />
-                    </div>
+                    <>
+                      <div className="landing-form-group">
+                        <label htmlFor="landing-full-name">Full name</label>
+                        <input
+                          id="landing-full-name"
+                          type="text"
+                          value={form.full_name}
+                          onChange={(event) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              full_name: event.target.value,
+                            }))
+                          }
+                          placeholder="Enter your full name"
+                          disabled={busy}
+                          autoComplete="name"
+                        />
+                      </div>
+                    </>
                   )}
 
                   <div className="landing-form-group">
